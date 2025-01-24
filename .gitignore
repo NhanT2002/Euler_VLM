@@ -1,0 +1,5 @@
+Euler_database/input_files*/*
+Euler_database/output_files/*
+Euler_solver/solution_files/*
+Euler_solver/input_files/*
+mesh/
