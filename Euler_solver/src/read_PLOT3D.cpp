@@ -158,6 +158,42 @@ void write_plot3d_2d(
     solution_file.close();  // Close the solution file
 }
 
+void write_PLOT3D_mesh(const std::vector<std::vector<double>>& x, 
+                       const std::vector<std::vector<double>>& y, 
+                       const std::string& mesh_filename) {
+    // Open the file
+    std::ofstream file(mesh_filename);
+    if (!file.is_open()) {
+        throw std::runtime_error("Could not open file: " + mesh_filename);
+    }
+
+    // Get the dimensions of the grid
+    int nx = x[0].size(); // Number of points in the x-direction
+    int ny = x.size();    // Number of points in the y-direction
+
+    // Write the dimensions of the grid (single block)
+    file << nx << " " << ny << "\n";
+
+    // Write the x-coordinates
+    for (int j = 0; j < ny; ++j) {
+        for (int i = 0; i < nx; ++i) {
+            file << x[j][i] << " ";
+        }
+        file << "\n";
+    }
+
+    // Write the y-coordinates
+    for (int j = 0; j < ny; ++j) {
+        for (int i = 0; i < nx; ++i) {
+            file << y[j][i] << " ";
+        }
+        file << "\n";
+    }
+
+    // Close the file
+    file.close();
+}
+
 std::vector<std::vector<std::vector<double>>> cell_dummy_to_vertex_centered_airfoil(const std::vector<std::vector<std::vector<double>>>& q_cell)
 {
     // Get dimensions
