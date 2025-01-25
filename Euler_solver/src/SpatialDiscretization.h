@@ -15,6 +15,7 @@ public:
     std::vector<std::vector<std::vector<double>>> R_c;
     std::vector<std::vector<std::vector<double>>> R_d;
     std::vector<std::vector<std::vector<double>>> R_d0;
+    std::vector<std::vector<std::vector<double>>> restriction_operator;
     std::vector<std::vector<std::vector<std::vector<double>>>> flux;
     std::vector<std::vector<std::vector<std::vector<double>>>> D;
     std::vector<std::vector<std::vector<double>>> eps_2;

@@ -54,6 +54,7 @@ SpatialDiscretization::SpatialDiscretization(const std::vector<std::vector<doubl
     R_c.resize(ny - 1, std::vector(nx - 1, std::vector<double>(4)));
     R_d.resize(ny - 1, std::vector(nx - 1, std::vector<double>(4)));
     R_d0.resize(ny - 1, std::vector(nx - 1, std::vector<double>(4)));
+    restriction_operator.resize(ny - 1, std::vector(nx - 1, std::vector<double>(4)));
     flux.resize(ny - 1 + 4, std::vector(nx - 1, std::vector(2, std::vector<double>(4))));
     D.resize(ny - 1 + 4, std::vector(nx - 1, std::vector(2, std::vector<double>(4))));
     eps_2.resize(ny - 1 + 4, std::vector(nx - 1, std::vector<double>(2)));

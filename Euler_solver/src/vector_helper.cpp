@@ -1,4 +1,5 @@
 #include "vector_helper.h"
+#include <iostream>
 
 // Function to add two vectors
 std::vector<double> vector_add(const std::vector<double> &a, const std::vector<double> &b) {
@@ -52,4 +53,12 @@ std::vector<double> vector_scale(double scalar, const std::vector<double> &a) {
         result[i] = scalar * a[i];
     }
     return result; // Return by value
+}
+
+// Function to print a vector
+void printVector(const std::vector<double>& vec) {
+    for (const double& val : vec) {
+        std::cout << val << " ";
+    }
+    std::cout << std::endl;
 }

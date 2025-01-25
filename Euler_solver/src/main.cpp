@@ -121,21 +121,24 @@ int main(int argc, char* argv[]) {
     double T = 1.0;
     double p = 1.0;
 
-    // TemporalDiscretization FVM(x, y, rho, u, v, E, T, p, T_inf, U_ref, CFL_number, residual_smoothing, k2_coeff, k4_coeff);
-    // auto[q, q_vertex, Residuals] = FVM.RungeKutta(it_max);
+    TemporalDiscretization FVM(x, y, rho, u, v, E, T, p, T_inf, U_ref, CFL_number, residual_smoothing, k2_coeff, k4_coeff);
+    auto[q, q_vertex, Residuals] = FVM.RungeKutta(it_max);
 
-    // auto end = std::chrono::high_resolution_clock::now();
-    // std::chrono::duration<double> serialDuration = end - start;
-    // std::cout << "\nSolver duration: " << serialDuration.count() << " seconds\n";
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> serialDuration = end - start;
+    std::cout << "\nSolver duration: " << serialDuration.count() << " seconds\n";
 
-    // TemporalDiscretization::save_checkpoint(q, {static_cast<int>(Residuals.size())}, Residuals, checkpoint_file);
-    // write_plot3d_2d(x, y, q_vertex, Mach, alpha, 0, 0, rho_inf, U_ref, output_file);
-    // std::cout << "PLOT3D files written successfully." << std::endl;
+    TemporalDiscretization::save_checkpoint(q, {static_cast<int>(Residuals.size())}, Residuals, checkpoint_file);
+    write_plot3d_2d(x, y, q_vertex, Mach, alpha, 0, 0, rho_inf, U_ref, output_file);
+    std::cout << "PLOT3D files written successfully." << std::endl;
 
-    SpatialDiscretization current_state(x, y, rho, u, v, E, T, p, k2_coeff, k4_coeff, T_inf, U_ref);
-    
-    Multigrid grid_h(current_state);
-    SpatialDiscretization h2_state = grid_h.restriction(current_state);
+    Multigrid grid_h(FVM.current_state);
+    SpatialDiscretization h2_state = grid_h.restriction(FVM.current_state);
+
+    // SpatialDiscretization current_state(x, y, rho, u, v, E, T, p, k2_coeff, k4_coeff, T_inf, U_ref);
+
+    // Multigrid grid_h(current_state);
+    // SpatialDiscretization h2_state = grid_h.restriction(current_state);
 
     return 0;
 
