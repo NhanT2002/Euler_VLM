@@ -12,6 +12,21 @@
 
 class TemporalDiscretization{
 public:
+    TemporalDiscretization(const std::vector<std::vector<double>>& x,
+                            const std::vector<std::vector<double>>& y,
+                            double rho,
+                            double u,
+                            double v,
+                            double E,
+                            double T,
+                            double p,
+                            double T_ref,
+                            double U_ref,
+                            double sigma = 0.5,
+                            int res_smoothing = 1,
+                            double k2_coeff = 1.0,
+                            double k4_coeff = 1.0);
+
     std::vector<std::vector<double>> x;
     std::vector<std::vector<double>> y;
     double rho, u, v, E, T, p;
@@ -21,20 +36,7 @@ public:
     double sigma, k2_coeff, k4_coeff;
     int res_smoothing;
 
-    TemporalDiscretization(const std::vector<std::vector<double>>& x,
-                           const std::vector<std::vector<double>>& y,
-                           const double& rho,
-                           const double& u,
-                           const double& v,
-                           const double& E,
-                           const double& T,
-                           const double& p,
-                           const double& T_ref,
-                           const double& U_ref,
-                           double sigma = 0.5,
-                           int res_smoothing = 1,
-                           double k2_coeff = 1.0,
-                           double k4_coeff = 1.0);
+    
 
     std::vector<std::vector<double>> compute_dt() const;
 
@@ -71,6 +73,13 @@ public:
 
     void run();
 };
+
+std::vector<std::vector<double>> thomasAlgorithm(std::vector<double>& a, // subdiagonal
+                                                 const std::vector<double>& b, // main diagonal
+                                                 std::vector<double>& c, // superdiagonal
+                                                 const std::vector<std::vector<double>>& d);  // right hand side
+
+std::vector<std::vector<double>> reshapeColumnWise(const std::vector<std::vector<double>>& input, int ny, int nx);
 
 
 

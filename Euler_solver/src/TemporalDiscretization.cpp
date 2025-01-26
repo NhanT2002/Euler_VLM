@@ -59,7 +59,7 @@ std::vector<std::vector<double>> reshapeColumnWise(
     int ny, int nx)
 {
     // Check input dimensions
-    if (input.size() != ny * nx) {
+    if (input.size() != static_cast<size_t>(ny * nx)) {
         throw std::invalid_argument("Input size does not match ny * nx.");
     }
 
@@ -82,20 +82,22 @@ std::vector<std::vector<double>> reshapeColumnWise(
 
 TemporalDiscretization::TemporalDiscretization(const std::vector<std::vector<double>>& x,
                                                const std::vector<std::vector<double>>& y,
-                                               const double& rho,
-                                               const double& u,
-                                               const double& v,
-                                               const double& E,
-                                               const double& T,
-                                               const double& p,
-                                               const double& T_ref,
-                                               const double& U_ref,
-                                               const double sigma,
-                                               const int res_smoothing,
-                                               const double k2_coeff,
-                                               const double k4_coeff)
+                                               double rho,
+                                               double u,
+                                               double v,
+                                               double E,
+                                               double T,
+                                               double p,
+                                               double T_ref,
+                                               double U_ref,
+                                               double sigma,
+                                               int res_smoothing,
+                                               double k2_coeff,
+                                               double k4_coeff)
     : x(x), y(y), rho(rho), u(u), v(v), E(E), T(T), p(p), T_ref(T_ref), U_ref(U_ref), sigma(sigma), res_smoothing(res_smoothing), k2_coeff(k2_coeff), k4_coeff(k4_coeff),
-      current_state(x, y, rho, u, v, E, T, p, k2_coeff, k4_coeff, T_ref, U_ref) {}
+      current_state(x, y, rho, u, v, E, T, p, k2_coeff, k4_coeff, T_ref, U_ref) {
+        current_state.run_even();
+      }
 
 std::vector<std::vector<double>> TemporalDiscretization::compute_dt() const {
     auto ny = current_state.W.size();
@@ -113,6 +115,7 @@ std::vector<std::vector<double>> TemporalDiscretization::compute_dt() const {
 
     return dt;
 }
+
 std::tuple<std::vector<double>, std::vector<double>, std::vector<double>, std::vector<double>, std::vector<double>, std::vector<double>> TemporalDiscretization::compute_abc() const {
     auto ny = current_state.W.size();
     auto nx = current_state.W[0].size();
@@ -330,7 +333,6 @@ std::tuple<std::vector<std::vector<std::vector<double>>>,
     int nx = current_state.W[0].size();
     std::cout << ny << " " << nx << std::endl;
 
-    current_state.run_even();
     // Initialize R_d0
     for (int j = 2; j < ny - 2; ++j) {
         for (int i = 0; i < nx; ++i) {

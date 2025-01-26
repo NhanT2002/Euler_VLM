@@ -16,6 +16,7 @@ public:
     std::vector<std::vector<std::vector<double>>> R_d;
     std::vector<std::vector<std::vector<double>>> R_d0;
     std::vector<std::vector<std::vector<double>>> restriction_operator;
+    std::vector<std::vector<std::vector<double>>> forcing_function;
     std::vector<std::vector<std::vector<double>>> prolongation_operator;
     std::vector<std::vector<std::vector<double>>> deltaW_2h;
     std::vector<std::vector<std::vector<std::vector<double>>>> flux;
@@ -45,6 +46,13 @@ public:
                           double T_ref,
                           double U_ref);
 
+    // Custom copy constructor
+    SpatialDiscretization(const SpatialDiscretization& other)
+        : x(other.x), y(other.y), rho(other.rho), u(other.u), v(other.v),
+          E(other.E), T(other.T), p(other.p), k2_coeff(other.k2_coeff),
+          k4_coeff(other.k4_coeff), T_ref(other.T_ref), U_ref(other.U_ref),
+          ny(other.ny), nx(other.nx), alpha(other.alpha) {}
+
     // Custom assignment operator
     SpatialDiscretization& operator=(const SpatialDiscretization& other) {
         if (this != &other) {
@@ -60,6 +68,9 @@ public:
             k4_coeff = other.k4_coeff;
             T_ref = other.T_ref;
             U_ref = other.U_ref;
+            ny = other.ny;
+            nx = other.nx;
+            alpha = other.alpha;
         }
         return *this;
     }
