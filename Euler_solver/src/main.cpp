@@ -134,6 +134,11 @@ int main(int argc, char* argv[]) {
 
     Multigrid grid_h(FVM.current_state);
     SpatialDiscretization h2_state = grid_h.restriction(FVM.current_state);
+    SpatialDiscretization h4_state = grid_h.restriction(h2_state); // Starting grid for the multigrid solver
+    FVM.current_state = h4_state;
+    auto[q2, q_vertex2, Residuals2] = FVM.RungeKutta(1000);
+    write_plot3d_2d(FVM.current_state.x, FVM.current_state.y, q_vertex2, Mach, alpha, 0, 0, rho_inf, U_ref, output_file);
+    std::cout << "PLOT3D files written successfully." << std::endl;
 
     // SpatialDiscretization current_state(x, y, rho, u, v, E, T, p, k2_coeff, k4_coeff, T_inf, U_ref);
 

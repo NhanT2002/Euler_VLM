@@ -30,19 +30,19 @@ T combineBoundaryValues(const T& solidWall, const T& interior, const T& farfield
 
 SpatialDiscretization::SpatialDiscretization(const std::vector<std::vector<double>>& x,
                           const std::vector<std::vector<double>>& y,
-                          const double& rho,
-                          const double& u,
-                          const double& v,
-                          const double& E,
-                          const double& T,
-                          const double& p,
-                          const double& k2_coeff,
-                          const double& k4_coeff,
-                          const double& T_ref,
-                          const double& U_ref)
+                          double rho,
+                          double u,
+                          double v,
+                          double E,
+                          double T,
+                          double p,
+                          double k2_coeff,
+                          double k4_coeff,
+                          double T_ref,
+                          double U_ref)
     : x(x), y(y), rho(rho), u(u), v(v), E(E), T(T), p(p), k2_coeff(k2_coeff), k4_coeff(k4_coeff), T_ref(T_ref), U_ref(U_ref) {
-    ny = static_cast<int>(y.size());
-    nx = static_cast<int>(x[0].size());
+    ny = y.size();
+    nx = x[0].size();
     alpha = std::atan2(v, u);
 
     std::vector OMEGA_domain(ny - 1, std::vector<double>(nx - 1));
@@ -55,6 +55,8 @@ SpatialDiscretization::SpatialDiscretization(const std::vector<std::vector<doubl
     R_d.resize(ny - 1, std::vector(nx - 1, std::vector<double>(4)));
     R_d0.resize(ny - 1, std::vector(nx - 1, std::vector<double>(4)));
     restriction_operator.resize(ny - 1, std::vector(nx - 1, std::vector<double>(4)));
+    prolongation_operator.resize(ny - 1, std::vector(nx - 1, std::vector<double>(4)));
+        
     flux.resize(ny - 1 + 4, std::vector(nx - 1, std::vector(2, std::vector<double>(4))));
     D.resize(ny - 1 + 4, std::vector(nx - 1, std::vector(2, std::vector<double>(4))));
     eps_2.resize(ny - 1 + 4, std::vector(nx - 1, std::vector<double>(2)));
@@ -143,6 +145,7 @@ SpatialDiscretization::SpatialDiscretization(const std::vector<std::vector<doubl
     Ds.resize(ny - 1 + 4, std::vector(nx - 1, std::vector<double>(2)));
     n.resize(ny - 1 + 4, std::vector(nx - 1, std::vector(2, std::vector<double>(2))));
     W.resize(ny - 1 + 4, std::vector(nx - 1, std::vector<double>(4)));
+    deltaW_2h.resize(ny - 1 + 4, std::vector(nx - 1, std::vector<double>(4)));
 
     // Combine using the helper function
     OMEGA = combineBoundaryValues(OMEGA_solidWall, OMEGA_domain, OMEGA_farfield);

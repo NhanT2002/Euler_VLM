@@ -16,6 +16,8 @@ public:
     std::vector<std::vector<std::vector<double>>> R_d;
     std::vector<std::vector<std::vector<double>>> R_d0;
     std::vector<std::vector<std::vector<double>>> restriction_operator;
+    std::vector<std::vector<std::vector<double>>> prolongation_operator;
+    std::vector<std::vector<std::vector<double>>> deltaW_2h;
     std::vector<std::vector<std::vector<std::vector<double>>>> flux;
     std::vector<std::vector<std::vector<std::vector<double>>>> D;
     std::vector<std::vector<std::vector<double>>> eps_2;
@@ -25,23 +27,42 @@ public:
     std::vector<std::vector<std::vector<double>>> Lambda_S;
 
     std::vector<std::vector<double>> x, y;
-    const double rho, u, v, E, T, p, k2_coeff, k4_coeff;
-    const double T_ref, U_ref;
+    double rho, u, v, E, T, p, k2_coeff, k4_coeff;
+    double T_ref, U_ref;
     int ny, nx;
     double alpha;
 
     SpatialDiscretization(const std::vector<std::vector<double>>& x,
                           const std::vector<std::vector<double>>& y,
-                          const double& rho,
-                          const double& u,
-                          const double& v,
-                          const double& E,
-                          const double& T,
-                          const double& p,
-                          const double& k2_coeff,
-                          const double& k4_coeff,
-                          const double& T_ref,
-                          const double& U_ref);
+                          double rho,
+                          double u,
+                          double v,
+                          double E,
+                          double T,
+                          double p,
+                          double k2_coeff,
+                          double k4_coeff,
+                          double T_ref,
+                          double U_ref);
+
+    // Custom assignment operator
+    SpatialDiscretization& operator=(const SpatialDiscretization& other) {
+        if (this != &other) {
+            x = other.x;
+            y = other.y;
+            rho = other.rho;
+            u = other.u;
+            v = other.v;
+            E = other.E;
+            T = other.T;
+            p = other.p;
+            k2_coeff = other.k2_coeff;
+            k4_coeff = other.k4_coeff;
+            T_ref = other.T_ref;
+            U_ref = other.U_ref;
+        }
+        return *this;
+    }
 
     std::tuple<double, double, double, double, double, double> conservative_variable_from_W(const std::vector<double>& W) const;
 
