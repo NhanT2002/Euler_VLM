@@ -12,6 +12,7 @@ public:
     int res_smoothing;
     double k2_coeff;
     double k4_coeff;
+    bool multigrid_convergence;
 
     // Constructor
     explicit Multigrid(SpatialDiscretization& h_state, double sigma = 0.5, int res_smoothing = 1, double k2_coeff = 1.0, double k4_coeff = 1.0);
@@ -19,7 +20,10 @@ public:
     // Fine to coarse grid
     SpatialDiscretization restriction(SpatialDiscretization& h_state);
 
-    std::tuple<std::vector<std::vector<std::vector<double>>>, std::vector<std::vector<double>>> restriction_timestep(SpatialDiscretization& h_state, int it_max);
+    std::tuple<std::vector<std::vector<std::vector<double>>>, std::vector<std::vector<double>>> restriction_timestep(SpatialDiscretization& h_state, 
+                                                                                                                    int it_max, 
+                                                                                                                    int current_iteration=0, 
+                                                                                                                    std::vector<double> multigrid_first_residual={});
 
     std::vector<std::vector<double>> compute_dt(SpatialDiscretization& current_state);
 

@@ -155,7 +155,7 @@ SpatialDiscretization::SpatialDiscretization(const std::vector<std::vector<doubl
     n = combineBoundaryValues(n_solidWall, n_domain, n_farfield);
     W = combineBoundaryValues(W_solidWall, W_domain, W_farfield);
 
-    std::cout << "end" << std::endl;
+    // std::cout << "end" << std::endl;
 }
 
 void SpatialDiscretization::compute_dummy_cells() {

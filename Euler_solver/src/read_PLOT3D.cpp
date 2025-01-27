@@ -154,6 +154,8 @@ void write_plot3d_2d(
         }
     }
     solution_file.close();  // Close the solution file
+
+    std::cout << "PLOT3D file " << solution_filename <<  " written successfully." << std::endl;
 }
 
 void write_PLOT3D_mesh(const std::vector<std::vector<double>>& x, 
@@ -190,6 +192,8 @@ void write_PLOT3D_mesh(const std::vector<std::vector<double>>& x,
 
     // Close the file
     file.close();
+
+    std::cout << "PLOT3D file " << mesh_filename <<  " written successfully." << std::endl;
 }
 
 std::vector<std::vector<std::vector<double>>> cell_dummy_to_vertex_centered_airfoil(const std::vector<std::vector<std::vector<double>>>& q_cell)

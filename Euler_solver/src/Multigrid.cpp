@@ -28,6 +28,8 @@ SpatialDiscretization Multigrid::restriction(SpatialDiscretization& h_state) {
     int nx_2h = (h_state.nx+1) / 2;
     std::vector<std::vector<double>> x_2h(ny_2h, std::vector<double>(nx_2h));
     std::vector<std::vector<double>> y_2h(ny_2h, std::vector<double>(nx_2h));
+
+    #pragma omp parallel for
     for (int j = 0; j < (h_state.ny - 1)/2 + 1; ++j) {
         for (int i = 0; i < (h_state.nx - 1)/2 + 1; ++i) {
             x_2h[j][i] = h_state.x[2 * j][2 * i];
@@ -36,8 +38,8 @@ SpatialDiscretization Multigrid::restriction(SpatialDiscretization& h_state) {
     }
 
     // Verify the mesh restriction
-    write_PLOT3D_mesh(h_state.x, h_state.y, "mesh_h.xy");
-    write_PLOT3D_mesh(x_2h, y_2h, "mesh_2h.xy");
+    // write_PLOT3D_mesh(h_state.x, h_state.y, "mesh_h.xy");
+    // write_PLOT3D_mesh(x_2h, y_2h, "mesh_2h.xy");
 
     SpatialDiscretization h2_state(x_2h, y_2h, h_state.rho, h_state.u, h_state.v, h_state.E,
                                     h_state.T, h_state.p, h_state.k2_coeff, h_state.k4_coeff,
@@ -46,8 +48,8 @@ SpatialDiscretization Multigrid::restriction(SpatialDiscretization& h_state) {
     int nx = h2_state.nx;
     int ny = h2_state.ny;
 
-    std::cout << "nx: " << nx << " ny: " << ny << std::endl;
-    
+    // std::cout << "nx: " << nx << " ny: " << ny << std::endl;
+    #pragma omp parallel for
     for (int j=2; j < ny_2h-1+2; ++j) {
         for (int i=0; i < nx_2h-1; ++i) {
             // Transfer operators for the cell-centered scheme
@@ -84,13 +86,13 @@ SpatialDiscretization Multigrid::restriction(SpatialDiscretization& h_state) {
     h2_state.run_even();
 
     // Forcing function
+    #pragma omp parallel for
     for (int j=0; j < ny_2h-1; ++j) {
         for (int i=0; i < nx_2h-1; ++i) {
             h2_state.forcing_function[j][i] = vector_subtract(h2_state.restriction_operator[j][i], vector_subtract(h2_state.R_c[j][i], h2_state.R_d[j][i]));   
         }
     }
 
-    Multigrid::h_state = h2_state;
  
     return h2_state;
 }
@@ -145,9 +147,14 @@ std::tuple<double, double, double> Multigrid::compute_coeff(SpatialDiscretizatio
     return {C_L, C_D, C_M};
 }
 
-std::tuple<std::vector<std::vector<std::vector<double>>>, std::vector<std::vector<double>>> Multigrid::restriction_timestep(SpatialDiscretization& h_state, int it_max) {
+std::tuple<std::vector<std::vector<std::vector<double>>>, std::vector<std::vector<double>>> Multigrid::restriction_timestep(SpatialDiscretization& h_state, 
+                                                                                                                            int it_max, 
+                                                                                                                            int current_multigrid_iteration, 
+                                                                                                                            std::vector<double> multigrid_first_residual) {
 
     h_state.run_even();
+    multigrid_convergence = false;
+    // std::cout << "Multigrid firs residual empty : " << multigrid_first_residual.empty() << std::endl;
 
     // Store initial interpolated solution
     std::vector<std::vector<std::vector<double>>> W_2h_0 = h_state.W;
@@ -160,9 +167,10 @@ std::tuple<std::vector<std::vector<std::vector<double>>>, std::vector<std::vecto
 
     int ny = h_state.W.size();
     int nx = h_state.W[0].size();
-    std::cout << ny << " " << nx << std::endl;
+    // std::cout << ny << " " << nx << std::endl;
 
     // Initialize R_d0
+    #pragma omp parallel for
     for (int j = 2; j < ny - 2; ++j) {
         for (int i = 0; i < nx; ++i) {
             h_state.R_d0[j-2][i] = h_state.R_d[j-2][i];
@@ -182,15 +190,16 @@ std::tuple<std::vector<std::vector<std::vector<double>>>, std::vector<std::vecto
     std::vector<std::vector<std::vector<double>>> q(ny - 4, std::vector<std::vector<double>>(nx, std::vector<double>(4, 1.0)));
 
     // Fill q array
+    #pragma omp parallel for
     for (int j = 2; j < ny - 2; ++j) {
         for (int i = 0; i < nx; ++i) {
             q[j - 2][i] = h_state.W[j][i];
         }
     }
 
-        std::vector<double> first_residual;
-        int it = 0;
-        std::vector<double> normalized_residuals = {1, 1, 1, 1};
+    std::vector<double> first_residual;
+    int it = 0;
+    std::vector<double> normalized_residuals = {1, 1, 1, 1};
 
     while (it < it_max) {
         if (res_smoothing == 0) {
@@ -422,30 +431,52 @@ std::tuple<std::vector<std::vector<std::vector<double>>>, std::vector<std::vecto
         // Compute L2 norm (placeholder logic)
         std::vector<double> l2_norm = compute_L2_norm(all_dw);
 
-        if (it == 0) {
-            first_residual = l2_norm;
+        if (it == 0 && current_multigrid_iteration == 0) {
+            multigrid_first_residual = l2_norm;
         }
-        normalized_residuals = vector_divide(l2_norm, first_residual);
+      
+        
         iteration.push_back(it);
         Residuals.push_back(l2_norm);
 
         auto [C_L, C_D, C_M] = compute_coeff(h_state);
 
-        std::cout << "It " << it << ": L2 Norms = ";
-        for (const auto &norm : normalized_residuals) {
-            std::cout << norm << " ";
-        }
-        std::cout << "C_L:" << C_L << " C_D:" << C_D << " C_M:" << C_M << std::endl;
+        if (current_multigrid_iteration != 0 && multigrid_first_residual.empty() == false) {
+            normalized_residuals = vector_divide(l2_norm, multigrid_first_residual);
+            std::cout << "It " << current_multigrid_iteration << ": L2 Norms = ";
+            for (const auto &norm : normalized_residuals) {
+                std::cout << norm << " ";                
+            }
+            std::cout << "C_L:" << C_L << " C_D:" << C_D << " C_M:" << C_M << std::endl;
 
-        // Check for convergence
-        if (*std::max_element(normalized_residuals.begin(), normalized_residuals.end()) <= 1e-11) {
-            break; // Exit the loop if convergence criterion is met
+            // Check for convergence
+            if (*std::max_element(normalized_residuals.begin(), normalized_residuals.end()) <= 1e-11) {
+                multigrid_convergence = true;
+                break; // Exit the loop if convergence criterion is met
+            }
         }
+        
+        
+        else if (current_multigrid_iteration == 0) {
+            normalized_residuals = vector_divide(l2_norm, multigrid_first_residual);
+            std::cout << "It " << it << ": L2 Norms = ";
+            for (const auto &norm : normalized_residuals) {
+                std::cout << norm << " ";                
+            }
+            std::cout << "C_L:" << C_L << " C_D:" << C_D << " C_M:" << C_M << std::endl;
 
-        // Save checkpoint at each 1000 iteration
-        if (it%1000 == 0) {
-            save_checkpoint(q, iteration, Residuals);
+            // Check for convergence
+            if (*std::max_element(normalized_residuals.begin(), normalized_residuals.end()) <= 1e-11) {
+                multigrid_convergence = true;
+                break; // Exit the loop if convergence criterion is met
         }
+        } 
+    
+
+        // // Save checkpoint at each 1000 iteration
+        // if (it%1000 == 0) {
+        //     save_checkpoint(q, iteration, Residuals);
+        // }
 
 
 
@@ -455,6 +486,7 @@ std::tuple<std::vector<std::vector<std::vector<double>>>, std::vector<std::vecto
     std::vector<std::vector<std::vector<double>>> q_cell_dummy(ny - 2, std::vector<std::vector<double>>(nx, std::vector<double>(4, 1.0)));
 
     // Compute q_vertex
+    #pragma omp parallel for
     for (int j = 1; j < ny - 1; ++j) {
         for (int i = 0; i < nx; ++i) {
             q_cell_dummy[j - 1][i] = h_state.W[j][i];
@@ -463,7 +495,7 @@ std::tuple<std::vector<std::vector<std::vector<double>>>, std::vector<std::vecto
     std::vector<std::vector<std::vector<double>>> q_vertex = cell_dummy_to_vertex_centered_airfoil(q_cell_dummy);
 
     // Corse grid correction
-    // #pragma omp parallel for
+    #pragma omp parallel for
     for (int j = 0; j < ny; ++j) {
         for (int i = 0; i < nx; ++i) {
             h_state.deltaW_2h[j][i] = vector_subtract(h_state.W[j][i], W_2h_0[j][i]);
@@ -477,17 +509,18 @@ std::tuple<std::vector<std::vector<std::vector<double>>>, std::vector<std::vecto
 
 // Prolongation implementation (coarse to fine grid)
 void Multigrid::prolongation(SpatialDiscretization& h2_state, SpatialDiscretization& h_state) {
-    std::cout << "Prolongation" << std::endl;
+    // std::cout << "Prolongation" << std::endl;
     int ny_cell_2h = h2_state.ny - 1;
     int nx_cell_2h = h2_state.nx - 1;
-    std::cout << "ny_cell_2h: " << ny_cell_2h << " nx_cell_2h: " << nx_cell_2h << std::endl;
+    // std::cout << "ny_cell_2h: " << ny_cell_2h << " nx_cell_2h: " << nx_cell_2h << std::endl;
 
     int nx = h_state.nx;
     int ny = h_state.ny;
 
-    std::cout << "nx: " << nx << " ny: " << ny << std::endl;
+    // std::cout << "nx: " << nx << " ny: " << ny << std::endl;
     // std::cout << "prolongation_operator size: " << h_state.prolongation_operator.size() << " " << h_state.prolongation_operator[0].size() << std::endl;
     // std::cout << "deltaW_2h size: " << h2_state.deltaW_2h.size() << " " << h2_state.deltaW_2h[0].size() << std::endl;
+    #pragma omp parallel for
     for (int j=2; j < ny; j += 2) {
         // upper right corner
         // std::cout << "upper right corner" << std::endl;
@@ -520,6 +553,7 @@ void Multigrid::prolongation(SpatialDiscretization& h2_state, SpatialDiscretizat
             // std::cout << " " << std::endl;
         }
     }
+    #pragma omp parallel for
     for (int j=3; j < ny + 1; j += 2) {
         // lower right corner
         // std::cout << "lower right corner" << std::endl;
@@ -554,6 +588,7 @@ void Multigrid::prolongation(SpatialDiscretization& h2_state, SpatialDiscretizat
     }
 
     // Compute W_h_+
+    #pragma omp parallel for
     for (int j = 2; j < ny - 1 + 2; ++j) {
         for (int i = 0; i < nx - 1; ++i) {
             // std::cout << "j: " << j << " i: " << i;
@@ -561,9 +596,6 @@ void Multigrid::prolongation(SpatialDiscretization& h2_state, SpatialDiscretizat
             // std::cout << "  W: " << h_state.W[j][i][0] << " " << h_state.W[j][i][1] << " " << h_state.W[j][i][2] << " " << h_state.W[j][i][3] << std::endl;
         }
     }
-
-
-    Multigrid::h_state = h_state;
     
 }
 
