@@ -21,9 +21,7 @@ Multigrid::Multigrid(SpatialDiscretization& h_state, double sigma, int res_smoot
       h_state(h_state), sigma(sigma), res_smoothing(res_smoothing), k2_coeff(k2_coeff), k4_coeff(k4_coeff) {}
 
 
-// Restriction implementation (fine to coarse grid)
-SpatialDiscretization Multigrid::restriction(SpatialDiscretization& h_state) {
-    h_state.run_even();
+SpatialDiscretization Multigrid::mesh_restriction(SpatialDiscretization& h_state) {
     int ny_2h = (h_state.ny+1) / 2;
     int nx_2h = (h_state.nx+1) / 2;
     std::vector<std::vector<double>> x_2h(ny_2h, std::vector<double>(nx_2h));
@@ -44,11 +42,16 @@ SpatialDiscretization Multigrid::restriction(SpatialDiscretization& h_state) {
     SpatialDiscretization h2_state(x_2h, y_2h, h_state.rho, h_state.u, h_state.v, h_state.E,
                                     h_state.T, h_state.p, h_state.k2_coeff, h_state.k4_coeff,
                                     h_state.T_ref, h_state.U_ref);
+    
+    return h2_state;
+}
 
-    int nx = h2_state.nx;
-    int ny = h2_state.ny;
+// Restriction implementation (fine to coarse grid)
+void Multigrid::restriction(SpatialDiscretization& h_state, SpatialDiscretization& h2_state) {
+    // h_state.run_even();
+    int ny_2h = (h_state.ny+1) / 2;
+    int nx_2h = (h_state.nx+1) / 2;
 
-    // std::cout << "nx: " << nx << " ny: " << ny << std::endl;
     #pragma omp parallel for
     for (int j=2; j < ny_2h-1+2; ++j) {
         for (int i=0; i < nx_2h-1; ++i) {
@@ -93,8 +96,6 @@ SpatialDiscretization Multigrid::restriction(SpatialDiscretization& h_state) {
         }
     }
 
- 
-    return h2_state;
 }
 
 std::vector<std::vector<double>> Multigrid::compute_dt(SpatialDiscretization& state) {
@@ -145,6 +146,67 @@ std::tuple<double, double, double> Multigrid::compute_coeff(SpatialDiscretizatio
     double C_M = M/(0.5*rho*(u*u+v*v)*c*c);
 
     return {C_L, C_D, C_M};
+}
+
+std::tuple<std::vector<double>, std::vector<double>, std::vector<double>, std::vector<double>, std::vector<double>, std::vector<double>> Multigrid::compute_abc(SpatialDiscretization& current_state) {
+    auto ny = current_state.W.size();
+    auto nx = current_state.W[0].size();
+
+    std::vector<double> a_I((ny - 4)*nx);
+    std::vector<double> b_I((ny - 4)*nx);
+    std::vector<double> c_I((ny - 4)*nx);
+    std::vector<double> a_J((ny - 4)*nx);
+    std::vector<double> b_J((ny - 4)*nx);
+    std::vector<double> c_J((ny - 4)*nx);
+
+    double rr = 2;
+    #pragma omp parallel for
+    for (size_t j = 2; j < ny - 2; ++j) {
+        for (size_t i = 0; i < nx; ++i) {
+            double r = current_state.Lambda_J[j][i]/current_state.Lambda_I[j][i];
+            double eps_I = std::max(0.25*(std::pow(rr*(1 + std::sqrt(r))/(1+r), 2)-1), 0.0);
+
+            if (i == 0) {
+                a_I[(j-2)*nx + i] = 0.0;
+            }
+            else {
+                a_I[(j-2)*nx + i] = -eps_I;
+            }
+            if (i == nx - 1) {
+                c_I[(j-2)*nx + i] = 0.0;
+            }
+            else {
+                c_I[(j-2)*nx + i] = -eps_I;
+            }
+
+            b_I[(j-2)*nx + i] = 1 + 2*eps_I;
+        }
+    }
+
+    #pragma omp parallel for
+    for (size_t i = 0; i < nx; ++i) {
+        for (size_t j = 2; j < ny - 2; ++j) {
+            double r = current_state.Lambda_J[j][i]/current_state.Lambda_I[j][i];
+            double eps_J = std::max(0.25*(std::pow(rr*(1 + std::sqrt(1/r))/(1+1/r), 2)-1), 0.0);
+
+            if (j == 2) {
+                a_J[i*nx + (j-2)] = 0.0;
+            }
+            else {
+                a_J[i*nx + (j-2)] = -eps_J;
+            }
+            if (j == ny - 3) {
+                c_J[i*nx + (j-2)] = 0.0;
+            }
+            else {
+                c_J[i*nx + (j-2)] = -eps_J;
+            }
+            b_J[i*nx + (j-2)] = 1 + 2*eps_J;
+
+        }
+    }
+
+    return {a_I, b_I, c_I, a_J, b_J, c_J};
 }
 
 std::tuple<std::vector<std::vector<std::vector<double>>>, std::vector<std::vector<double>>> Multigrid::restriction_timestep(SpatialDiscretization& h_state, 
@@ -309,7 +371,8 @@ std::tuple<std::vector<std::vector<std::vector<double>>>, std::vector<std::vecto
                     d[(j-2)*nx + i] = dW;
                 }
             }
-            auto [a_I, b_I, c_I, a_J, b_J, c_J] = compute_abc();
+
+            auto [a_I, b_I, c_I, a_J, b_J, c_J] = compute_abc(h_state);
             std::vector<std::vector<double>> R_star = thomasAlgorithm(a_I, b_I, c_I, d);
             R_star = reshapeColumnWise(R_star, ny-4, nx);
             std::vector<std::vector<double>> R_star_star = thomasAlgorithm(a_J, b_J, c_J, R_star);
@@ -334,7 +397,7 @@ std::tuple<std::vector<std::vector<std::vector<double>>>, std::vector<std::vecto
                     d[(j-2)*nx + i] = dW;
                 }
             }
-            std::tie(a_I, b_I, c_I, a_J, b_J, c_J) = compute_abc();
+            std::tie(a_I, b_I, c_I, a_J, b_J, c_J) = compute_abc(h_state);
             R_star = thomasAlgorithm(a_I, b_I, c_I, d);
             R_star = reshapeColumnWise(R_star, ny-4, nx);
             R_star_star = thomasAlgorithm(a_J, b_J, c_J, R_star);
@@ -360,7 +423,7 @@ std::tuple<std::vector<std::vector<std::vector<double>>>, std::vector<std::vecto
                     d[(j-2)*nx + i] = dW;
                 }
             }
-            std::tie(a_I, b_I, c_I, a_J, b_J, c_J) = compute_abc();
+            std::tie(a_I, b_I, c_I, a_J, b_J, c_J) = compute_abc(h_state);
             R_star = thomasAlgorithm(a_I, b_I, c_I, d);
             R_star = reshapeColumnWise(R_star, ny-4, nx);
             R_star_star = thomasAlgorithm(a_J, b_J, c_J, R_star);
@@ -384,7 +447,7 @@ std::tuple<std::vector<std::vector<std::vector<double>>>, std::vector<std::vecto
                     d[(j-2)*nx + i] = dW;
                 }
             }
-            std::tie(a_I, b_I, c_I, a_J, b_J, c_J) = compute_abc();
+            std::tie(a_I, b_I, c_I, a_J, b_J, c_J) = compute_abc(h_state);
             R_star = thomasAlgorithm(a_I, b_I, c_I, d);
             R_star = reshapeColumnWise(R_star, ny-4, nx);
             R_star_star = thomasAlgorithm(a_J, b_J, c_J, R_star);
@@ -409,7 +472,7 @@ std::tuple<std::vector<std::vector<std::vector<double>>>, std::vector<std::vecto
                     d[(j-2)*nx + i] = dW;
                 }
             }
-            std::tie(a_I, b_I, c_I, a_J, b_J, c_J) = compute_abc();
+            std::tie(a_I, b_I, c_I, a_J, b_J, c_J) = compute_abc(h_state);
             R_star = thomasAlgorithm(a_I, b_I, c_I, d);
             R_star = reshapeColumnWise(R_star, ny-4, nx);
             R_star_star = thomasAlgorithm(a_J, b_J, c_J, R_star);

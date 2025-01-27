@@ -128,28 +128,22 @@ int main(int argc, char* argv[]) {
     // TemporalDiscretization::save_checkpoint(q, {static_cast<int>(Residuals.size())}, Residuals, checkpoint_file);
     // write_plot3d_2d(q_vertex, Mach, alpha, 0, 0, rho_inf, U_ref, output_file);
 
-    // Multigrid ------------------------------------------------------------------------------------------
+    // --------------------------------- Multigrid ------------------------------------------------------------------------------------------
     Multigrid Multigrid(h_state, CFL_number, residual_smoothing, k2_coeff, k4_coeff);
-    SpatialDiscretization h2_state = Multigrid.restriction(h_state);
-    SpatialDiscretization h4_state = Multigrid.restriction(h2_state);
-    SpatialDiscretization h8_state = Multigrid.restriction(h4_state);
-    // SpatialDiscretization h16_state = Multigrid.restriction(h8_state);
-    // SpatialDiscretization h32_state = Multigrid.restriction(h16_state);
-    // SpatialDiscretization h64_state = Multigrid.restriction(h32_state);
-    // SpatialDiscretization h128_state = Multigrid.restriction(h64_state);
-    std::cout << Multigrid.h_state.ny << " ------Multigrid h_state size " << Multigrid.h_state.nx << std::endl;    
+    SpatialDiscretization h2_state = Multigrid.mesh_restriction(h_state);
+    SpatialDiscretization h4_state = Multigrid.mesh_restriction(h2_state);
+    SpatialDiscretization h8_state = Multigrid.mesh_restriction(h4_state);
+
 
     // Initialize 
     std::vector<std::vector<std::vector<double>>> q_vertex;
     std::vector<std::vector<double>> Residuals;
 
-    // std::tie(q_vertex, Residuals) = Multigrid.restriction_timestep(h16_state, it_max);
-    // Multigrid.prolongation(h16_state, h8_state);
     std::tie(q_vertex, Residuals) = Multigrid.restriction_timestep(h8_state, it_max);
     Multigrid.prolongation(h8_state, h4_state);
     std::tie(q_vertex, Residuals) = Multigrid.restriction_timestep(h4_state, it_max);
     Multigrid.prolongation(h4_state, h2_state);
-    std::tie(q_vertex, Residuals) = Multigrid.restriction_timestep(h2_state, 100);
+    std::tie(q_vertex, Residuals) = Multigrid.restriction_timestep(h2_state, 1000);
     Multigrid.prolongation(h2_state, h_state); // Starting grid
     std::tie(q_vertex, Residuals) = Multigrid.restriction_timestep(h_state, 1);
     std::vector<double> multigrid_first_residual = Residuals.back();
@@ -166,20 +160,20 @@ int main(int argc, char* argv[]) {
             break;
         }
 
-        h2_state = Multigrid.restriction(h_state); // V
+        Multigrid.restriction(h_state, h2_state); // V
         std::tie(q_vertex, Residuals) = Multigrid.restriction_timestep(h2_state, 1, i);
 
-        h4_state = Multigrid.restriction(h2_state); // V
+        Multigrid.restriction(h2_state, h4_state); // V
         std::tie(q_vertex, Residuals) = Multigrid.restriction_timestep(h4_state, 1, i);
 
-        h8_state = Multigrid.restriction(h4_state); // V
+        Multigrid.restriction(h4_state, h8_state); // V
         std::tie(q_vertex, Residuals) = Multigrid.restriction_timestep(h8_state, 1, i);
 
 
         Multigrid.prolongation(h8_state, h4_state); // ^
         std::tie(q_vertex, Residuals) = Multigrid.restriction_timestep(h4_state, 1, i);
 
-        h8_state = Multigrid.restriction(h4_state); // V
+        Multigrid.restriction(h4_state, h8_state); // V
         std::tie(q_vertex, Residuals) = Multigrid.restriction_timestep(h8_state, 1, i);
 
         Multigrid.prolongation(h8_state, h4_state); // ^
@@ -188,16 +182,16 @@ int main(int argc, char* argv[]) {
         Multigrid.prolongation(h4_state, h2_state); // ^
         std::tie(q_vertex, Residuals) = Multigrid.restriction_timestep(h2_state, 1, i);
 
-        h4_state = Multigrid.restriction(h2_state); // V
+        Multigrid.restriction(h2_state, h4_state); // V
         std::tie(q_vertex, Residuals) = Multigrid.restriction_timestep(h4_state, 1, i);
 
-        h8_state = Multigrid.restriction(h4_state); // V
+        Multigrid.restriction(h4_state, h8_state); // V
         std::tie(q_vertex, Residuals) = Multigrid.restriction_timestep(h8_state, 1, i);
 
         Multigrid.prolongation(h8_state, h4_state); // ^
         std::tie(q_vertex, Residuals) = Multigrid.restriction_timestep(h4_state, 1, i);
 
-        h8_state = Multigrid.restriction(h4_state); // V
+        Multigrid.restriction(h4_state, h8_state); // V
         std::tie(q_vertex, Residuals) = Multigrid.restriction_timestep(h8_state, 1, i);
 
         Multigrid.prolongation(h8_state, h4_state); // ^
@@ -213,6 +207,7 @@ int main(int argc, char* argv[]) {
 
 
     write_plot3d_2d(q_vertex, Mach, alpha, 0, 0, rho_inf, U_ref, output_file);
+    
     
 
 
