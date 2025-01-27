@@ -95,9 +95,7 @@ TemporalDiscretization::TemporalDiscretization(const std::vector<std::vector<dou
                                                double k2_coeff,
                                                double k4_coeff)
     : x(x), y(y), rho(rho), u(u), v(v), E(E), T(T), p(p), T_ref(T_ref), U_ref(U_ref), sigma(sigma), res_smoothing(res_smoothing), k2_coeff(k2_coeff), k4_coeff(k4_coeff),
-      current_state(x, y, rho, u, v, E, T, p, k2_coeff, k4_coeff, T_ref, U_ref) {
-        current_state.run_even();
-      }
+      current_state(x, y, rho, u, v, E, T, p, k2_coeff, k4_coeff, T_ref, U_ref) {}
 
 std::vector<std::vector<double>> TemporalDiscretization::compute_dt() const {
     auto ny = current_state.W.size();
@@ -333,6 +331,7 @@ std::tuple<std::vector<std::vector<std::vector<double>>>,
     int nx = current_state.W[0].size();
     std::cout << ny << " " << nx << std::endl;
 
+    current_state.run_even();
     // Initialize R_d0
     for (int j = 2; j < ny - 2; ++j) {
         for (int i = 0; i < nx; ++i) {
@@ -656,6 +655,6 @@ std::tuple<double, double, double> TemporalDiscretization::compute_coeff() {
     double C_D = D/(0.5*rho*(u*u+v*v)*c);
     double C_M = M/(0.5*rho*(u*u+v*v)*c*c);
 
-    return std::tie<double>(C_L, C_D, C_M);
+    return {C_L, C_D, C_M};
 }
 

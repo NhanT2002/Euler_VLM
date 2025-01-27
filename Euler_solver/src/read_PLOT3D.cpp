@@ -108,8 +108,6 @@ std::tuple<int, int, double, double, double, double, std::vector<std::vector<std
 }
 
 void write_plot3d_2d(
-    const std::vector<std::vector<double>>& x,
-    const std::vector<std::vector<double>>& y,
     const std::vector<std::vector<std::vector<double>>>& q,
     double mach,
     double alpha,
@@ -120,8 +118,8 @@ void write_plot3d_2d(
     const std::string& solution_filename)
 {
     // Get dimensions
-    auto nj = x.size();
-    auto ni = x[0].size();
+    auto nj = q.size();
+    auto ni = q[0].size();
 
     // Write solution file (2D.q)
     std::ofstream solution_file(solution_filename);

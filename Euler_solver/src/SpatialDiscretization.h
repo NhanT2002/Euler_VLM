@@ -45,6 +45,34 @@ public:
                           double k4_coeff,
                           double T_ref,
                           double U_ref);
+    
+    // Default constructor to initialize empty variables
+    SpatialDiscretization()
+        : rho(0), u(0), v(0), E(0), T(0), p(0), k2_coeff(0), k4_coeff(0),
+          T_ref(0), U_ref(0), ny(0), nx(0), alpha(0) {
+            // Initialize member vectors with empty sizes
+        OMEGA = {};
+        s = {};
+        Ds = {};
+        n = {};
+        W = {};
+        R_c = {};
+        R_d = {};
+        R_d0 = {};
+        restriction_operator = {};
+        forcing_function = {};
+        prolongation_operator = {};
+        deltaW_2h = {};
+        flux = {};
+        D = {};
+        eps_2 = {};
+        eps_4 = {};
+        Lambda_I = {};
+        Lambda_J = {};
+        Lambda_S = {};
+        x = {};
+        y = {};
+          }
 
     // Custom copy constructor
     SpatialDiscretization(const SpatialDiscretization& other)

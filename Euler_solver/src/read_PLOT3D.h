@@ -12,9 +12,7 @@ std::tuple<std::vector<std::vector<double>>, std::vector<std::vector<double>>> r
 std::tuple<int, int, double, double, double, double, std::vector<std::vector<std::vector<double>>>> read_PLOT3D_solution(const std::string& solution_filename);
 
 // Function to write PLOT3D solution from a file
-void write_plot3d_2d(const std::vector<std::vector<double>>& x,
-                     const std::vector<std::vector<double>>& y,
-                     const std::vector<std::vector<std::vector<double>>>& q,
+void write_plot3d_2d(const std::vector<std::vector<std::vector<double>>>& q,
                      double mach,
                      double alpha,
                      double reyn,

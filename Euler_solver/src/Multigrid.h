@@ -3,6 +3,7 @@
 
 #include "TemporalDiscretization.h"
 #include "SpatialDiscretization.h"
+#include <vector>
 
 class Multigrid : public TemporalDiscretization {
 public:
@@ -18,10 +19,14 @@ public:
     // Fine to coarse grid
     SpatialDiscretization restriction(SpatialDiscretization& h_state);
 
-    SpatialDiscretization restriction_timestep(int it_max);
+    std::tuple<std::vector<std::vector<std::vector<double>>>, std::vector<std::vector<double>>> restriction_timestep(SpatialDiscretization& h_state, int it_max);
+
+    std::vector<std::vector<double>> compute_dt(SpatialDiscretization& current_state);
+
+    std::tuple<double, double, double> compute_coeff(SpatialDiscretization& current_state);
 
     // Coarse to fine grid
-    SpatialDiscretization prolongation(SpatialDiscretization& h2_state, std::vector<std::vector<double>>& x_h, std::vector<std::vector<double>>& y_h);
+    void prolongation(SpatialDiscretization& h2_state, SpatialDiscretization& h_state);
 };
 
 #endif // MULTIGRID_H

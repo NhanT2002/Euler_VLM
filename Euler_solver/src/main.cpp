@@ -121,36 +121,48 @@ int main(int argc, char* argv[]) {
     double T = 1.0;
     double p = 1.0;
 
-    // TemporalDiscretization FVM(x, y, rho, u, v, E, T, p, T_inf, U_ref, CFL_number, residual_smoothing, k2_coeff, k4_coeff);
-    SpatialDiscretization current_state(x, y, rho, u, v, E, T, p, k2_coeff, k4_coeff, T_inf, U_ref);
-    // auto[q, q_vertex, Residuals] = FVM.RungeKutta(500);
+    TemporalDiscretization FVM(x, y, rho, u, v, E, T, p, T_inf, U_ref, CFL_number, residual_smoothing, k2_coeff, k4_coeff);
+    SpatialDiscretization h_state(x, y, rho, u, v, E, T, p, k2_coeff, k4_coeff, T_inf, U_ref);
 
-    // auto end = std::chrono::high_resolution_clock::now();
-    // std::chrono::duration<double> serialDuration = end - start;
-    // std::cout << "\nSolver duration: " << serialDuration.count() << " seconds\n";
-
+    // auto[q, q_vertex, Residuals] = FVM.RungeKutta(it_max);
     // TemporalDiscretization::save_checkpoint(q, {static_cast<int>(Residuals.size())}, Residuals, checkpoint_file);
     // write_plot3d_2d(x, y, q_vertex, Mach, alpha, 0, 0, rho_inf, U_ref, output_file);
     // std::cout << "PLOT3D files written successfully." << std::endl;
 
-    Multigrid grid_h(current_state, CFL_number, residual_smoothing, k2_coeff, k4_coeff);
-    grid_h.restriction_timestep(it_max);
+    // Multigrid ------------------------------------------------------------------------------------------
+    Multigrid Multigrid(h_state, CFL_number, residual_smoothing, k2_coeff, k4_coeff);
+    SpatialDiscretization h2_state = Multigrid.restriction(h_state);
+    SpatialDiscretization h4_state = Multigrid.restriction(h2_state);
+    SpatialDiscretization h8_state = Multigrid.restriction(h4_state);
+    SpatialDiscretization h16_state = Multigrid.restriction(h8_state);
+    // SpatialDiscretization h32_state = Multigrid.restriction(h16_state);
+    // SpatialDiscretization h64_state = Multigrid.restriction(h32_state);
+    // SpatialDiscretization h128_state = Multigrid.restriction(h64_state);
+    std::cout << Multigrid.h_state.ny << " ------Multigrid h_state size " << Multigrid.h_state.nx << std::endl;    
 
-    // FVM.RungeKutta(it_max);
+    // Initialize 
+    std::vector<std::vector<std::vector<double>>> q_vertex;
+    std::vector<std::vector<double>> Residuals;
+
+    std::tie(q_vertex, Residuals) = Multigrid.restriction_timestep(h16_state, it_max);
+    Multigrid.prolongation(h16_state, h8_state);
+    std::tie(q_vertex, Residuals) = Multigrid.restriction_timestep(h8_state, it_max);
+    Multigrid.prolongation(h8_state, h4_state);
+    std::tie(q_vertex, Residuals) = Multigrid.restriction_timestep(h4_state, it_max);
+    Multigrid.prolongation(h4_state, h2_state);
+    std::tie(q_vertex, Residuals) = Multigrid.restriction_timestep(h2_state, it_max);
+    // Multigrid.prolongation(h16_state, h8_state);
+    // std::tie(q_vertex, Residuals) = Multigrid.restriction_timestep(h8_state, it_max);
 
 
-    // SpatialDiscretization h2_state = grid_h.restriction(FVM.current_state);
-    // SpatialDiscretization h4_state = grid_h.restriction(h2_state); // Starting grid for the multigrid solver
-    // SpatialDiscretization h6_state = grid_h.restriction(h4_state);
-    // FVM.current_state = h6_state;
-    // auto[q2, q_vertex2, Residuals2] = FVM.RungeKutta(1000);
-    // write_plot3d_2d(FVM.current_state.x, FVM.current_state.y, q_vertex2, Mach, alpha, 0, 0, rho_inf, U_ref, output_file);
-    // std::cout << "PLOT3D files written successfully." << std::endl;
+    write_plot3d_2d(q_vertex, Mach, alpha, 0, 0, rho_inf, U_ref, output_file);
+    std::cout << "PLOT3D files written successfully." << std::endl;
 
-    // SpatialDiscretization current_state(x, y, rho, u, v, E, T, p, k2_coeff, k4_coeff, T_inf, U_ref);
 
-    // Multigrid grid_h(current_state);
-    // SpatialDiscretization h2_state = grid_h.restriction(current_state);
+
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> serialDuration = end - start;
+    std::cout << "\nSolver duration: " << serialDuration.count() << " seconds\n";
 
     return 0;
 
