@@ -2,39 +2,95 @@
 #define SPATIALDISCRETIZATION_H
 
 #include <vector>
+#include <Eigen/Dense>
 
 class SpatialDiscretization {
 public:
 
+    Eigen::ArrayXXd OMEGA; // Volume of cell
+    Eigen::ArrayXXd sx_x; // x face x component
+    Eigen::ArrayXXd sx_y; // x face y component
+    Eigen::ArrayXXd sy_x; // y face x component
+    Eigen::ArrayXXd sy_y; // y face y component
+    Eigen::ArrayXXd Ds_x; // x face length
+    Eigen::ArrayXXd Ds_y; // y face length
+    Eigen::ArrayXXd nx_x; // x face normal x component
+    Eigen::ArrayXXd nx_y; // x face normal y component
+    Eigen::ArrayXXd ny_x; // y face normal x component
+    Eigen::ArrayXXd ny_y; // y face normal y component
 
-    std::vector<std::vector<double>> OMEGA;
-    std::vector<std::vector<std::vector<std::vector<double>>>> s;
-    std::vector<std::vector<std::vector<double>>> Ds;
-    std::vector<std::vector<std::vector<std::vector<double>>>> n;
-    std::vector<std::vector<std::vector<double>>> W;
-    std::vector<std::vector<std::vector<double>>> R_c;
-    std::vector<std::vector<std::vector<double>>> R_d;
-    std::vector<std::vector<std::vector<double>>> R_d0;
-    std::vector<std::vector<std::vector<double>>> restriction_operator;
-    std::vector<std::vector<std::vector<double>>> forcing_function;
-    std::vector<std::vector<std::vector<double>>> prolongation_operator;
-    std::vector<std::vector<std::vector<double>>> deltaW_2h;
-    std::vector<std::vector<std::vector<std::vector<double>>>> flux;
-    std::vector<std::vector<std::vector<std::vector<double>>>> D;
-    std::vector<std::vector<std::vector<double>>> eps_2;
-    std::vector<std::vector<std::vector<double>>> eps_4;
-    std::vector<std::vector<double>> Lambda_I;
-    std::vector<std::vector<double>> Lambda_J;
-    std::vector<std::vector<std::vector<double>>> Lambda_S;
+    Eigen::ArrayXXd rho_cells; // Density
+    Eigen::ArrayXXd u_cells; // x velocity
+    Eigen::ArrayXXd v_cells; // y velocity
+    Eigen::ArrayXXd E_cells; // Energy
+    Eigen::ArrayXXd p_cells; // Pressure
+    Eigen::ArrayXXd W_0; // rho
+    Eigen::ArrayXXd W_1; // rho*u
+    Eigen::ArrayXXd W_2; // rho*v
+    Eigen::ArrayXXd W_3; // rho*E
+    Eigen::ArrayXXd Rc_0; 
+    Eigen::ArrayXXd Rc_1; 
+    Eigen::ArrayXXd Rc_2; 
+    Eigen::ArrayXXd Rc_3; 
+    Eigen::ArrayXXd Rd_0; 
+    Eigen::ArrayXXd Rd_1; 
+    Eigen::ArrayXXd Rd_2; 
+    Eigen::ArrayXXd Rd_3; 
+    Eigen::ArrayXXd Rd0_0; 
+    Eigen::ArrayXXd Rd0_1;
+    Eigen::ArrayXXd Rd0_2;
+    Eigen::ArrayXXd Rd0_3;
 
-    std::vector<std::vector<double>> x, y;
+    Eigen::ArrayXXd fluxx_0; // x flux 
+    Eigen::ArrayXXd fluxx_1; // x flux 
+    Eigen::ArrayXXd fluxx_2; // x flux
+    Eigen::ArrayXXd fluxx_3; // x flux
+    Eigen::ArrayXXd fluxy_0; // y flux
+    Eigen::ArrayXXd fluxy_1; // y flux
+    Eigen::ArrayXXd fluxy_2; // y flux
+    Eigen::ArrayXXd fluxy_3; // y flux
+    
+    Eigen::ArrayXXd dissipx_0; // x dissipation
+    Eigen::ArrayXXd dissipx_1; // x dissipation
+    Eigen::ArrayXXd dissipx_2; // x dissipation
+    Eigen::ArrayXXd dissipx_3; // x dissipation
+    Eigen::ArrayXXd dissipy_0; // y dissipation
+    Eigen::ArrayXXd dissipy_1; // y dissipation
+    Eigen::ArrayXXd dissipy_2; // y dissipation
+    Eigen::ArrayXXd dissipy_3; // y dissipation
+    Eigen::ArrayXXd eps2_x;
+    Eigen::ArrayXXd eps2_y;
+    Eigen::ArrayXXd eps4_x;
+    Eigen::ArrayXXd eps4_y;
+    Eigen::ArrayXXd Lambda_I;
+    Eigen::ArrayXXd Lambda_J;
+
+    Eigen::ArrayXXd restriction_operator_0;
+    Eigen::ArrayXXd restriction_operator_1;
+    Eigen::ArrayXXd restriction_operator_2;
+    Eigen::ArrayXXd restriction_operator_3;
+    Eigen::ArrayXXd forcing_function_0;
+    Eigen::ArrayXXd forcing_function_1;
+    Eigen::ArrayXXd forcing_function_2;
+    Eigen::ArrayXXd forcing_function_3;
+    Eigen::ArrayXXd prolongation_operator_0;
+    Eigen::ArrayXXd prolongation_operator_1;
+    Eigen::ArrayXXd prolongation_operator_2;
+    Eigen::ArrayXXd prolongation_operator_3;
+    Eigen::ArrayXXd deltaW2h_0;
+    Eigen::ArrayXXd deltaW2h_1;
+    Eigen::ArrayXXd deltaW2h_2;
+    Eigen::ArrayXXd deltaW2h_3;
+    
+
+    Eigen::ArrayXXd x, y;
     double rho, u, v, E, T, p, k2_coeff, k4_coeff;
     double T_ref, U_ref;
-    int ny, nx;
+    int nvertex_y, nvertex_x, ncells_y, ncells_x;
     double alpha;
 
-    SpatialDiscretization(const std::vector<std::vector<double>>& x,
-                          const std::vector<std::vector<double>>& y,
+    SpatialDiscretization(const Eigen::ArrayXXd& x,
+                          const Eigen::ArrayXXd& y,
                           double rho,
                           double u,
                           double v,
@@ -49,37 +105,13 @@ public:
     // Default constructor to initialize empty variables
     SpatialDiscretization()
         : rho(0), u(0), v(0), E(0), T(0), p(0), k2_coeff(0), k4_coeff(0),
-          T_ref(0), U_ref(0), ny(0), nx(0), alpha(0) {
-            // Initialize member vectors with empty sizes
-        OMEGA = {};
-        s = {};
-        Ds = {};
-        n = {};
-        W = {};
-        R_c = {};
-        R_d = {};
-        R_d0 = {};
-        restriction_operator = {};
-        forcing_function = {};
-        prolongation_operator = {};
-        deltaW_2h = {};
-        flux = {};
-        D = {};
-        eps_2 = {};
-        eps_4 = {};
-        Lambda_I = {};
-        Lambda_J = {};
-        Lambda_S = {};
-        x = {};
-        y = {};
-          }
+          T_ref(0), U_ref(0), alpha(0) {}
 
     // Custom copy constructor
     SpatialDiscretization(const SpatialDiscretization& other)
         : x(other.x), y(other.y), rho(other.rho), u(other.u), v(other.v),
           E(other.E), T(other.T), p(other.p), k2_coeff(other.k2_coeff),
-          k4_coeff(other.k4_coeff), T_ref(other.T_ref), U_ref(other.U_ref),
-          ny(other.ny), nx(other.nx), alpha(other.alpha) {}
+          k4_coeff(other.k4_coeff), T_ref(other.T_ref), U_ref(other.U_ref), alpha(other.alpha) {}
 
     // Custom assignment operator
     SpatialDiscretization& operator=(const SpatialDiscretization& other) {
@@ -96,12 +128,12 @@ public:
             k4_coeff = other.k4_coeff;
             T_ref = other.T_ref;
             U_ref = other.U_ref;
-            ny = other.ny;
-            nx = other.nx;
             alpha = other.alpha;
         }
         return *this;
     }
+
+    void update_W();
 
     std::tuple<double, double, double, double, double, double> conservative_variable_from_W(const std::vector<double>& W) const;
 

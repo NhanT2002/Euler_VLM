@@ -4,9 +4,10 @@
 #include <vector>
 #include <string>
 #include <tuple>
+#include <Eigen/Dense>
 
 // Function to read PLOT3D mesh from a file
-std::tuple<std::vector<std::vector<double>>, std::vector<std::vector<double>>> read_PLOT3D_mesh(const std::string& file_name);
+std::tuple<Eigen::ArrayXXd, Eigen::ArrayXXd> read_PLOT3D_mesh(const std::string& file_name);
 
 // Function to read PLOT3D solution from a file
 std::tuple<int, int, double, double, double, double, std::vector<std::vector<std::vector<double>>>> read_PLOT3D_solution(const std::string& solution_filename);

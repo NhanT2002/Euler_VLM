@@ -74,7 +74,9 @@
         "typeindex": "cpp",
         "typeinfo": "cpp",
         "variant": "cpp",
-        "codecvt": "cpp"
+        "codecvt": "cpp",
+        "core": "cpp",
+        "specialfunctions": "cpp"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }

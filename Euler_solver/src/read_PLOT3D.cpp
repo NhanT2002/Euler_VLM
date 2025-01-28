@@ -4,8 +4,9 @@
 #include <sstream>   // For string stream
 #include <stdexcept> // For exception handling
 #include <iostream>  // For printing errors (optional)
+#include <Eigen/Dense>
 
-std::tuple<std::vector<std::vector<double>>, std::vector<std::vector<double>>> read_PLOT3D_mesh(const std::string& file_name) {
+std::tuple<Eigen::ArrayXXd, Eigen::ArrayXXd> read_PLOT3D_mesh(const std::string& file_name) {
 
     std::ifstream file(file_name);
 
@@ -29,30 +30,31 @@ std::tuple<std::vector<std::vector<double>>, std::vector<std::vector<double>>> r
     int total_points = nx * ny;
 
     // Initialize 1D arrays for x and y coordinates
-    std::vector<double> x(total_points);
-    std::vector<double> y(total_points);
+    Eigen::ArrayXd x(total_points);
+    Eigen::ArrayXd y(total_points);
 
     // Read the coordinates from the file
     for (int i = 0; i < total_points; ++i) {
-        if (!(file >> x[i])) {
+        if (!(file >> x(i))) {
             throw std::runtime_error("Error reading x coordinates from file: " + file_name);
         }
     }
 
     for (int i = 0; i < total_points; ++i) {
-        if (!(file >> y[i])) {
+        if (!(file >> y(i))) {
             throw std::runtime_error("Error reading y coordinates from file: " + file_name);
         }
     }
 
     // Reshape 1D x and y arrays into 2D arrays (vectors of vectors)
-    std::vector<std::vector<double>> x_2d(ny, std::vector<double>(nx));
-    std::vector<std::vector<double>> y_2d(ny, std::vector<double>(nx));
+    Eigen::ArrayXXd x_2d(ny, nx);
+    Eigen::ArrayXXd y_2d(ny, nx);
+
 
     for (int j = 0; j < ny; ++j) {
         for (int i = 0; i < nx; ++i) {
-            x_2d[j][i] = x[j * nx + i];
-            y_2d[j][i] = y[j * nx + i];
+            x_2d(j, i) = x(j * nx + i);
+            y_2d(j, i) = y(j * nx + i);
         }
     }
 
