@@ -103,10 +103,10 @@ int main(int argc, char* argv[]) {
 
     // Read the PLOT3D mesh from a file
     auto [x, y] = read_PLOT3D_mesh(mesh_file);
-    std::cout << "x size: " << x.size() << " element" << std::endl;
-    std::cout << "y size: " << y.size() << " element" << std::endl;
-    std::cout << "x" << x << std::endl;
-    std::cout << "y" << y << std::endl;
+    // std::cout << "x size: " << x.size() << " element" << std::endl;
+    // std::cout << "y size: " << y.size() << " element" << std::endl;
+    // std::cout << "x" << x << std::endl;
+    // std::cout << "y" << y << std::endl;
 
 
     double rho_inf = p_inf/(T_inf*287);
@@ -129,27 +129,49 @@ int main(int argc, char* argv[]) {
 
     // TemporalDiscretization FVM(x, y, rho, u, v, E, T, p, T_inf, U_ref, CFL_number, residual_smoothing, k2_coeff, k4_coeff);
     SpatialDiscretization h_state(x, y, rho, u, v, E, T, p, k2_coeff, k4_coeff, T_inf, U_ref);
+    // SpatialDiscretization h_state(x, y, rho_inf, u_inf, v_inf, E_inf, T_inf, p_inf, k2_coeff, k4_coeff, T_inf, U_ref);
     h_state.compute_dummy_cells();
+    h_state.update_halo();
     h_state.update_W();
-    // std::cout << "OMEGA\n" << h_state.OMEGA << std::endl;
+    h_state.compute_flux();
+    h_state.compute_lambda();
+    std::cout << "OMEGA\n" << h_state.OMEGA << std::endl;
     // std::cout << "sx_x\n" << h_state.sx_x << std::endl;
     // std::cout << "sx_y\n" << h_state.sx_y << std::endl;
     // std::cout << "sy_x\n" << h_state.sy_x << std::endl;
     // std::cout << "sy_y\n" << h_state.sy_y << std::endl;
     // std::cout << "Ds_x\n" << h_state.Ds_x << std::endl;
+    std::cout << "Ds_x_avg\n" << h_state.Ds_x_avg << std::endl;
     // std::cout << "Ds_y\n" << h_state.Ds_y << std::endl;
+    std::cout << "Ds_y_avg\n" << h_state.Ds_y_avg << std::endl;
     // std::cout << "nx_x\n" << h_state.nx_x << std::endl;
+    std::cout << "nx_x_avg\n" << h_state.nx_x_avg << std::endl;
     // std::cout << "nx_y\n" << h_state.nx_y << std::endl;
+    std::cout << "nx_y_avg\n" << h_state.nx_y_avg << std::endl;
     // std::cout << "ny_x\n" << h_state.ny_x << std::endl;
+    std::cout << "ny_x_avg\n" << h_state.ny_x_avg << std::endl;
     // std::cout << "ny_y\n" << h_state.ny_y << std::endl;
-    std::cout << "rho_cells\n" << h_state.rho_cells << std::endl;
-    std::cout << "u_cells\n" << h_state.u_cells << std::endl;
-    std::cout << "v_cells\n" << h_state.v_cells << std::endl;
-    std::cout << "E_cells\n" << h_state.E_cells << std::endl;
-    std::cout << "W_0\n" << h_state.W_0 << std::endl;
-    std::cout << "W_1\n" << h_state.W_1 << std::endl;
-    std::cout << "W_2\n" << h_state.W_2 << std::endl;
-    std::cout << "W_3\n" << h_state.W_3 << std::endl;
+    std::cout << "ny_y_avg\n" << h_state.ny_y_avg << std::endl;
+    // std::cout << "rho_cells\n" << h_state.rho_cells << std::endl;
+    // std::cout << "u_cells\n" << h_state.u_cells << std::endl;
+    // std::cout << "v_cells\n" << h_state.v_cells << std::endl;
+    // std::cout << "E_cells\n" << h_state.E_cells << std::endl;
+    // std::cout << "p_cells\n" << h_state.p_cells << std::endl;
+    // std::cout << "W_0\n" << h_state.W_0 << std::endl;
+    // std::cout << "W_1\n" << h_state.W_1 << std::endl;
+    // std::cout << "W_2\n" << h_state.W_2 << std::endl;
+    // std::cout << "W_3\n" << h_state.W_3 << std::endl;
+    // std::cout << "fluxx_0\n" << h_state.fluxx_0 << std::endl;
+    // std::cout << "fluxx_1\n" << h_state.fluxx_1 << std::endl;
+    // std::cout << "fluxx_2\n" << h_state.fluxx_2 << std::endl;
+    // std::cout << "fluxx_3\n" << h_state.fluxx_3 << std::endl;
+    // std::cout << "fluxy_0\n" << h_state.fluxy_0 << std::endl;
+    // std::cout << "fluxy_1\n" << h_state.fluxy_1 << std::endl;
+    // std::cout << "fluxy_2\n" << h_state.fluxy_2 << std::endl;
+    // std::cout << "fluxy_3\n" << h_state.fluxy_3 << std::endl;
+    std::cout << "Lambda_I\n" << h_state.Lambda_I << std::endl;
+    std::cout << "Lambda_J\n" << h_state.Lambda_J << std::endl;
+
 
     // // auto[q, q_vertex, Residuals] = FVM.RungeKutta(it_max);
     // // TemporalDiscretization::save_checkpoint(q, {static_cast<int>(Residuals.size())}, Residuals, checkpoint_file);

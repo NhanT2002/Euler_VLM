@@ -14,16 +14,23 @@ public:
     Eigen::ArrayXXd sy_y; // y face y component
     Eigen::ArrayXXd Ds_x; // x face length
     Eigen::ArrayXXd Ds_y; // y face length
+    Eigen::ArrayXXd Ds_x_avg; // average x face of the cell
+    Eigen::ArrayXXd Ds_y_avg; // average y face of the cell
     Eigen::ArrayXXd nx_x; // x face normal x component
+    Eigen::ArrayXXd nx_x_avg; // average x face normal x component
     Eigen::ArrayXXd nx_y; // x face normal y component
+    Eigen::ArrayXXd nx_y_avg; // average x face normal y component
     Eigen::ArrayXXd ny_x; // y face normal x component
+    Eigen::ArrayXXd ny_x_avg; // average y face normal x component
     Eigen::ArrayXXd ny_y; // y face normal y component
+    Eigen::ArrayXXd ny_y_avg; // average y face normal y component
 
     Eigen::ArrayXXd rho_cells; // Density
     Eigen::ArrayXXd u_cells; // x velocity
     Eigen::ArrayXXd v_cells; // y velocity
     Eigen::ArrayXXd E_cells; // Energy
     Eigen::ArrayXXd p_cells; // Pressure
+
     Eigen::ArrayXXd W_0; // rho
     Eigen::ArrayXXd W_1; // rho*u
     Eigen::ArrayXXd W_2; // rho*v
@@ -41,14 +48,14 @@ public:
     Eigen::ArrayXXd Rd0_2;
     Eigen::ArrayXXd Rd0_3;
 
-    Eigen::ArrayXXd fluxx_0; // x flux 
-    Eigen::ArrayXXd fluxx_1; // x flux 
-    Eigen::ArrayXXd fluxx_2; // x flux
-    Eigen::ArrayXXd fluxx_3; // x flux
-    Eigen::ArrayXXd fluxy_0; // y flux
-    Eigen::ArrayXXd fluxy_1; // y flux
-    Eigen::ArrayXXd fluxy_2; // y flux
-    Eigen::ArrayXXd fluxy_3; // y flux
+    Eigen::ArrayXXd fluxx_0; // x flux rho component
+    Eigen::ArrayXXd fluxx_1; // x flux x momentum component
+    Eigen::ArrayXXd fluxx_2; // x flux y momentum component
+    Eigen::ArrayXXd fluxx_3; // x flux energy component
+    Eigen::ArrayXXd fluxy_0; // y flux rho component
+    Eigen::ArrayXXd fluxy_1; // y flux x momentum component
+    Eigen::ArrayXXd fluxy_2; // y flux y momentum component
+    Eigen::ArrayXXd fluxy_3; // y flux energy component
     
     Eigen::ArrayXXd dissipx_0; // x dissipation
     Eigen::ArrayXXd dissipx_1; // x dissipation
@@ -86,7 +93,7 @@ public:
     Eigen::ArrayXXd x, y;
     double rho, u, v, E, T, p, k2_coeff, k4_coeff;
     double T_ref, U_ref;
-    int nvertex_y, nvertex_x, ncells_y, ncells_x;
+    int nvertex_y, nvertex_x, ncells_y, ncells_x, ncells_domain_y, ncells_domain_x;
     double alpha;
 
     SpatialDiscretization(const Eigen::ArrayXXd& x,
@@ -135,15 +142,19 @@ public:
 
     void update_W();
 
+    void update_halo();
+
     std::tuple<double, double, double, double, double, double> conservative_variable_from_W(const std::vector<double>& W) const;
 
     void compute_dummy_cells();
 
-    std::vector<double> FcDs(const std::vector<double>& W, const std::vector<double>& n, const double& Ds) const;
+    void compute_flux();
+
+    std::tuple<Eigen::ArrayXXd, Eigen::ArrayXXd, Eigen::ArrayXXd, Eigen::ArrayXXd> FcDs(const Eigen::ArrayXXd& rhoo, const Eigen::ArrayXXd& uu, const Eigen::ArrayXXd& vv, const Eigen::ArrayXXd& EE, const Eigen::ArrayXXd& pp, 
+                                            const Eigen::ArrayXXd& nx, const Eigen::ArrayXXd& ny, const Eigen::ArrayXXd& Ds);
 
     double Lambdac(const std::vector<double>& W, const std::vector<double>& n, const double& Ds) const;
 
-    void compute_Fc_DeltaS();
     std::tuple<double, double> compute_epsilon(const std::vector<double>& W_Im1, const std::vector<double>& W_I,
                                               const std::vector<double>& W_Ip1, const std::vector<double>& W_Ip2,
                                               double k2 = 1.0/4.0, double k4 = 1.0/64.0) const;
