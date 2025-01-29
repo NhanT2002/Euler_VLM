@@ -65,10 +65,10 @@ public:
     Eigen::ArrayXXd dissipy_1; // y dissipation
     Eigen::ArrayXXd dissipy_2; // y dissipation
     Eigen::ArrayXXd dissipy_3; // y dissipation
-    Eigen::ArrayXXd eps2_x;
-    Eigen::ArrayXXd eps2_y;
-    Eigen::ArrayXXd eps4_x;
-    Eigen::ArrayXXd eps4_y;
+    // Eigen::ArrayXXd eps2_x;
+    // Eigen::ArrayXXd eps2_y;
+    // Eigen::ArrayXXd eps4_x;
+    // Eigen::ArrayXXd eps4_y;
     Eigen::ArrayXXd Lambda_I;
     Eigen::ArrayXXd Lambda_J;
 
@@ -144,7 +144,7 @@ public:
 
     void update_halo();
 
-    std::tuple<double, double, double, double, double, double> conservative_variable_from_W(const std::vector<double>& W) const;
+    void update_conservative_variables();
 
     void compute_dummy_cells();
 
@@ -153,19 +153,18 @@ public:
     std::tuple<Eigen::ArrayXXd, Eigen::ArrayXXd, Eigen::ArrayXXd, Eigen::ArrayXXd> FcDs(const Eigen::ArrayXXd& rhoo, const Eigen::ArrayXXd& uu, const Eigen::ArrayXXd& vv, const Eigen::ArrayXXd& EE, const Eigen::ArrayXXd& pp, 
                                             const Eigen::ArrayXXd& nx, const Eigen::ArrayXXd& ny, const Eigen::ArrayXXd& Ds);
 
-    double Lambdac(const std::vector<double>& W, const std::vector<double>& n, const double& Ds) const;
 
-    std::tuple<double, double> compute_epsilon(const std::vector<double>& W_Im1, const std::vector<double>& W_I,
-                                              const std::vector<double>& W_Ip1, const std::vector<double>& W_Ip2,
-                                              double k2 = 1.0/4.0, double k4 = 1.0/64.0) const;
+    std::tuple<Eigen::ArrayXXd, Eigen::ArrayXXd> compute_epsilon(const Eigen::ArrayXXd& p_Im1, const Eigen::ArrayXXd& p, const Eigen::ArrayXXd& p_Ip1, const Eigen::ArrayXXd& p_Ip2, double k2 = 1.0/4.0, double k4 = 1.0/64.0);
 
     void compute_lambda();
 
     void compute_dissipation();
 
-    void compute_R_c();
+    void compute_Rc();
 
-    void compute_R_d();
+    void compute_Rd();
+
+    void update_Rd0();
 
     void run_odd();
 

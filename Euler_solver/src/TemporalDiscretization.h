@@ -9,11 +9,21 @@
 #include <string>
 #include "SpatialDiscretization.h"
 #include <vector>
+#include <Eigen/Dense>
 
 class TemporalDiscretization{
 public:
-    TemporalDiscretization(const std::vector<std::vector<double>>& x,
-                            const std::vector<std::vector<double>>& y,
+    Eigen::ArrayXXd& x;
+    Eigen::ArrayXXd& y;
+    double rho, u, v, E, T, p;
+    double T_ref, U_ref;
+
+    SpatialDiscretization current_state;
+    double sigma, k2_coeff, k4_coeff;
+    int res_smoothing;
+
+    TemporalDiscretization(Eigen::ArrayXXd& x,
+                            Eigen::ArrayXXd& y,
                             double rho,
                             double u,
                             double v,
@@ -27,18 +37,13 @@ public:
                             double k2_coeff = 1.0,
                             double k4_coeff = 1.0);
 
-    std::vector<std::vector<double>> x;
-    std::vector<std::vector<double>> y;
-    double rho, u, v, E, T, p;
-    double T_ref, U_ref;
-
-    SpatialDiscretization current_state;
-    double sigma, k2_coeff, k4_coeff;
-    int res_smoothing;
+    
 
     
 
-    std::vector<std::vector<double>> compute_dt() const;
+    Eigen::ArrayXXd compute_dt() const;
+
+    void Res() const;
 
     std::tuple<std::vector<double>, std::vector<double>, std::vector<double>, std::vector<double>, std::vector<double>, std::vector<double>> compute_abc() const;
 
@@ -55,7 +60,7 @@ public:
                   double psi = 0.125,
                   double rr = 2.) const;
 
-    static std::vector<double> compute_L2_norm(const std::vector<std::vector<std::vector<double>>> &residuals);
+    Eigen::Array<double, 4, 1> compute_L2_norm(const Eigen::ArrayXXd &dW_0, const Eigen::ArrayXXd &dW_1, const Eigen::ArrayXXd &dW_2, const Eigen::ArrayXXd &dW_3);
 
     static void save_checkpoint(const std::vector<std::vector<std::vector<double>>>& q,
                          const std::vector<int>& iteration,
@@ -67,9 +72,7 @@ public:
 
     std::tuple<double, double, double> compute_coeff();
 
-    std::tuple<std::vector<std::vector<std::vector<double>>>,
-               std::vector<std::vector<std::vector<double>>>,
-               std::vector<std::vector<double>>> RungeKutta(int it_max = 20000);
+    std::tuple<SpatialDiscretization, std::vector<std::vector<double>>> RungeKutta(int it_max = 20000);
 
     void run();
 };
