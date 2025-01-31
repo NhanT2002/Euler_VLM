@@ -76,21 +76,21 @@ public:
 
     // string filename = "";
 
-    Tensor<double, 3> mesh_nodes;
+    Tensor<double, 3, RowMajor> mesh_nodes;
 
-    Tensor<double, 4> faces;        // i, j, k, (nx, ny, dS)
-    Tensor<double, 4> avg_faces;        // i, j, k, (nx, ny, dS)
-    Tensor<double, 2> volumes;      // i, j
-    Tensor<double, 3> cv;           // Conservative variables
-    Tensor<double, 3> dv;           // Dependent variables
+    Tensor<double, 4, RowMajor> faces;        // i, j, k, (nx, ny, dS)
+    Tensor<double, 4, RowMajor> avg_faces;        // i, j, k, (nx, ny, dS)
+    Tensor<double, 2, RowMajor> volumes;      // i, j
+    Tensor<double, 3, RowMajor> cv;           // Conservative variables
+    Tensor<double, 3, RowMajor> dv;           // Dependent variables
 
-    Tensor<double, 3> upsilon;
-    Tensor<double, 3> epsilon2;
-    Tensor<double, 3> epsilon4;
+    Tensor<double, 3, RowMajor> upsilon;
+    Tensor<double, 3, RowMajor> epsilon2;
+    Tensor<double, 3, RowMajor> epsilon4;
 
-    Tensor<double, 3> lambda;
+    Tensor<double, 3, RowMajor> lambda;
 
-    Tensor<double, 2> dt;
+    Tensor<double, 2, RowMajor> dt;
 
     void load_mesh(const string filename) {
 
@@ -114,7 +114,7 @@ public:
         cout << "Number of i nodes: " << ni_nodes << "\n";
         cout << "Number of j nodes: " << nj_nodes << endl;
 
-        mesh_nodes = Tensor<double, 3>(ni_nodes, nj_nodes, 2);
+        mesh_nodes = Tensor<double, 3, RowMajor>(ni_nodes, nj_nodes, 2);
 
         // vector<vector<vector<double>>> nodes(i_nodes, vector<vector<double>>(j_nodes, vector<double>(2, 0)));
 
@@ -142,18 +142,18 @@ public:
         ni_cells = ni_nodes + 3;
         nj_cells = nj_nodes + 3;
 
-        faces = Tensor<double, 4>(ni_cells, nj_cells, 4, 3);
-        avg_faces = Tensor<double, 4>(ni_cells, nj_cells, 2, 3);
-        volumes = Tensor<double, 2>(ni_cells, nj_cells);
-        cv = Tensor<double, 3>(ni_cells, nj_cells, 4);
-        dv = Tensor<double, 3>(ni_cells, nj_cells, 5);
+        faces = Tensor<double, 4, RowMajor>(ni_cells, nj_cells, 4, 3);
+        avg_faces = Tensor<double, 4, RowMajor>(ni_cells, nj_cells, 2, 3);
+        volumes = Tensor<double, 2, RowMajor>(ni_cells, nj_cells);
+        cv = Tensor<double, 3, RowMajor>(ni_cells, nj_cells, 4);
+        dv = Tensor<double, 3, RowMajor>(ni_cells, nj_cells, 5);
 
-        upsilon = Tensor<double, 3>(ni_cells, nj_cells, 2);
-        epsilon2 = Tensor<double, 3>(ni_cells, nj_cells, 2);
-        epsilon4 = Tensor<double, 3>(ni_cells, nj_cells, 2);
-        lambda = Tensor<double, 3>(ni_cells, nj_cells, 3);
+        upsilon = Tensor<double, 3, RowMajor>(ni_cells, nj_cells, 2);
+        epsilon2 = Tensor<double, 3, RowMajor>(ni_cells, nj_cells, 2);
+        epsilon4 = Tensor<double, 3, RowMajor>(ni_cells, nj_cells, 2);
+        lambda = Tensor<double, 3, RowMajor>(ni_cells, nj_cells, 3);
 
-        dt = Tensor<double, 2>(ni_cells, nj_cells);
+        dt = Tensor<double, 2, RowMajor>(ni_cells, nj_cells);
         // dt_broadcasted = Tensor<double, 3>(ni_cells, nj_cells, 4);
         // volumes_broadcasted = Tensor<double, 3>(ni_cells, nj_cells, 4);
 
@@ -210,25 +210,53 @@ public:
         // Give dummy cells dimensions
         // TODO: maybe give corner cells volume to avoid NaN error
         for (int i = 2; i < ni_cells-2; i++) {
-            faces.chip(i, 0).chip(0, 0) = faces.chip(i, 0).chip(2, 0);
-            faces.chip(i, 0).chip(1, 0) = faces.chip(i, 0).chip(2, 0);
+            for (int k = 0; k < 4; k++) {
+                faces(i, 0, k, 0) = faces(i, 2, k, 0);
+                faces(i, 0, k, 1) = faces(i, 2, k, 1);
+                faces(i, 0, k, 2) = faces(i, 2, k, 2);
+
+                faces(i, 1, k, 0) = faces(i, 2, k, 0);
+                faces(i, 1, k, 1) = faces(i, 2, k, 1);
+                faces(i, 1, k, 2) = faces(i, 2, k, 2);
+
+                faces(i, nj_cells-1, k, 0) = faces(i, nj_cells-3, k, 0);
+                faces(i, nj_cells-1, k, 1) = faces(i, nj_cells-3, k, 1);
+                faces(i, nj_cells-1, k, 2) = faces(i, nj_cells-3, k, 2);
+
+                faces(i, nj_cells-2, k, 0) = faces(i, nj_cells-3, k, 0);
+                faces(i, nj_cells-2, k, 1) = faces(i, nj_cells-3, k, 1);
+                faces(i, nj_cells-2, k, 2) = faces(i, nj_cells-3, k, 2);
+            }
+
             volumes(i, 0) = volumes(i, 2);
             volumes(i, 1) = volumes(i, 2);
 
-            faces.chip(i, 0).chip(nj_cells-1, 0) = faces.chip(i, 0).chip(nj_cells-3, 0);
-            faces.chip(i, 0).chip(nj_cells-2, 0) = faces.chip(i, 0).chip(nj_cells-3, 0);
             volumes(i, nj_cells-1) = volumes(i, nj_cells-3);
             volumes(i, nj_cells-2) = volumes(i, nj_cells-3);
         }
 
         for (int j = 2; j < nj_cells-2; j++) {
-            faces.chip(0, 0).chip(j, 0) = faces.chip(ni_cells-4, 0).chip(j, 0);
-            faces.chip(1, 0).chip(j, 0) = faces.chip(ni_cells-3, 0).chip(j, 0);
+            for (int k = 0; k < 4; k++) {
+                faces(0, j, k, 0) = faces(ni_cells-4, j, k, 0);
+                faces(0, j, k, 1) = faces(ni_cells-4, j, k, 1);
+                faces(0, j, k, 2) = faces(ni_cells-4, j, k, 2);
+
+                faces(1,  j, k, 0) = faces(ni_cells-3, j, k, 0);
+                faces(1,  j, k, 1) = faces(ni_cells-3, j, k, 1);
+                faces(1,  j, k, 2) = faces(ni_cells-3, j, k, 2);
+
+                faces(ni_cells-1, j, k, 0) = faces(3, j, k, 0);
+                faces(ni_cells-1, j, k, 1) = faces(3, j, k, 1);
+                faces(ni_cells-1, j, k, 2) = faces(3, j, k, 2);
+
+                faces(ni_cells-2, j, k, 0) = faces(2, j, k, 0);
+                faces(ni_cells-2, j, k, 1) = faces(2, j, k, 1);
+                faces(ni_cells-2, j, k, 2) = faces(2, j, k, 2);
+            }
+
             volumes(0, j) = volumes(ni_cells-4, j);
             volumes(1, j) = volumes(ni_cells-3, j);
 
-            faces.chip(ni_cells-1, 0).chip(j, 0) = faces.chip(3, 0).chip(j, 0);
-            faces.chip(ni_cells-2, 0).chip(j, 0) = faces.chip(2, 0).chip(j, 0);
             volumes(ni_cells-1, j) = volumes(3, j);
             volumes(ni_cells-2, j) = volumes(2, j);
         }
@@ -250,13 +278,12 @@ public:
     }
 
     void initialize_cells() {
-
-        Tensor<double, 1> init_values(4);
-        init_values.setValues({rho_inf, rho_inf*u_inf, rho_inf*v_inf, rho_inf*E_inf});
-
         for (int i = 0; i < ni_cells; i++) {
             for (int j = 0; j < nj_cells; j++) {
-                cv.chip(i, 0).chip(j, 0) = init_values;
+                cv(i, j, 0) = rho_inf;
+                cv(i, j, 1) = rho_inf*u_inf;
+                cv(i, j, 2) = rho_inf*v_inf;
+                cv(i, j, 3) = rho_inf*E_inf;
             }
         }
     }
@@ -294,14 +321,14 @@ public:
     }
 
 
-    Tensor<double, 3> compute_flux() {
+    Tensor<double, 3, RowMajor> compute_flux() {
 
         auto start_time = chrono::high_resolution_clock::now();
 
-        Tensor<double, 3> flux(ni_cells, nj_cells, 4);
+        Tensor<double, 3, RowMajor> flux(ni_cells, nj_cells, 4);
         // flux.setZero();
 
-        Tensor<double, 4> flux_faces(ni_cells, nj_cells, 2, 4);
+        Tensor<double, 4, RowMajor> flux_faces(ni_cells, nj_cells, 2, 4);
 
         //
         #pragma omp parallel for collapse(2) schedule(static, CHUNK_SIZE)
@@ -508,12 +535,12 @@ public:
         duration_lambda += (end_time - start_time);
     }
 
-    Tensor<double, 3> compute_dissipation() {
+    Tensor<double, 3, RowMajor> compute_dissipation() {
 
         auto start_time = chrono::high_resolution_clock::now();
 
-        Tensor<double, 3> dissip(ni_cells, nj_cells, 4);
-        Tensor<double, 4> dissip_faces(ni_cells, nj_cells, 2, 4);
+        Tensor<double, 3, RowMajor> dissip(ni_cells, nj_cells, 4);
+        Tensor<double, 4, RowMajor> dissip_faces(ni_cells, nj_cells, 2, 4);
         // dissip.setZero();
 
         #pragma omp parallel for collapse(2) schedule(dynamic, CHUNK_SIZE)
@@ -569,8 +596,16 @@ public:
 
         // solid wall (airfoil)
         for(int i = 2; i < ni_cells-2; i++) {
-            cv.chip(i, 0).chip(1, 0) = 2.0*cv.chip(i, 0).chip(2, 0) - cv.chip(i, 0).chip(3, 0);
-            cv.chip(i, 0).chip(0, 0) = 3.0*cv.chip(i, 0).chip(2, 0) - 2.0*cv.chip(i, 0).chip(3, 0);
+            cv(i, 1, 0) = 2.0*cv(i, 2, 0) - cv(i, 3, 0);
+            cv(i, 1, 1) = 2.0*cv(i, 2, 1) - cv(i, 3, 1);
+            cv(i, 1, 2) = 2.0*cv(i, 2, 2) - cv(i, 3, 2);
+            cv(i, 1, 3) = 2.0*cv(i, 2, 3) - cv(i, 3, 3);
+
+
+            cv(i, 0, 0) = 3.0*cv(i, 2, 0) - 2.0*cv(i, 3, 0);
+            cv(i, 0, 1) = 3.0*cv(i, 2, 1) - 2.0*cv(i, 3, 1);
+            cv(i, 0, 2) = 3.0*cv(i, 2, 2) - 2.0*cv(i, 3, 2);
+            cv(i, 0, 3) = 3.0*cv(i, 2, 3) - 2.0*cv(i, 3, 3);
 
             update_dependent(i, 1);
             update_dependent(i, 0);
@@ -645,18 +680,37 @@ public:
             update_dependent(i, nj_cells-1);
 
 
-            cv.chip(i, 0).chip(nj_cells-2, 0) = 2.0*cv.chip(i, 0).chip(nj_cells-1, 0) - cv.chip(i, 0).chip(nj_cells-3, 0);
+            cv(i, nj_cells-2, 0) = 2.0*cv(i, nj_cells-1, 0) - cv(i, nj_cells-3,  0);
+            cv(i, nj_cells-2, 1) = 2.0*cv(i, nj_cells-1, 1) - cv(i, nj_cells-3,  1);
+            cv(i, nj_cells-2, 2) = 2.0*cv(i, nj_cells-1, 2) - cv(i, nj_cells-3,  2);
+            cv(i, nj_cells-2, 3) = 2.0*cv(i, nj_cells-1, 3) - cv(i, nj_cells-3,  3);
+
             update_dependent(i, nj_cells-2);
         }
 
         // coordinate cut
         for (int j = 2; j < nj_cells-2; j++) {
 
-            cv.chip(0, 0).chip(j, 0) = cv.chip(ni_cells-4, 0).chip(j, 0);
-            cv.chip(1, 0).chip(j, 0) = cv.chip(ni_cells-3, 0).chip(j, 0);
+            cv(0, j, 0) = cv(ni_cells-4, j, 0);
+            cv(0, j, 1) = cv(ni_cells-4, j, 1);
+            cv(0, j, 2) = cv(ni_cells-4, j, 2);
+            cv(0, j, 3) = cv(ni_cells-4, j, 3);
 
-            cv.chip(ni_cells-1, 0).chip(j, 0) = cv.chip(3, 0).chip(j, 0);
-            cv.chip(ni_cells-2, 0).chip(j, 0) = cv.chip(2, 0).chip(j, 0);
+
+            cv(1, j, 0) = cv(ni_cells-3, j, 0);
+            cv(1, j, 1) = cv(ni_cells-3, j, 1);
+            cv(1, j, 2) = cv(ni_cells-3, j, 2);
+            cv(1, j, 3) = cv(ni_cells-3, j, 3);
+
+            cv(ni_cells-1, j, 0) = cv(3, j, 0);
+            cv(ni_cells-1, j, 1) = cv(3, j, 1);
+            cv(ni_cells-1, j, 2) = cv(3, j, 2);
+            cv(ni_cells-1, j, 3) = cv(3, j, 3);
+
+            cv(ni_cells-2, j, 0) = cv(2, j, 0);
+            cv(ni_cells-2, j, 1) = cv(2, j, 1);
+            cv(ni_cells-2, j, 2) = cv(2, j, 2);
+            cv(ni_cells-2, j, 3) = cv(2, j, 3);
 
             update_dependent(1, j);
             update_dependent(0, j);
@@ -699,7 +753,7 @@ public:
 
     // TODO: move this code to a new class
 
-    void apply_dt(const Tensor<double, 3>& cv_0, const double alpha, const Tensor<double, 3>& Rc, const Tensor<double, 3>& Rd) {
+    void apply_dt(const Tensor<double, 3, RowMajor>& cv_0, const double alpha, const Tensor<double, 3, RowMajor>& Rc, const Tensor<double, 3, RowMajor>& Rd) {
 
         auto start_time = chrono::high_resolution_clock::now();
 
@@ -721,9 +775,9 @@ public:
         duration_update_dt += (end_time - start_time);
     }
 
-    Tensor<double, 3> compute_Rd_mid(const Tensor<double, 3>& Rd0, const Tensor<double, 3>& Rd1, const double beta0, const double beta1) {
+    Tensor<double, 3, RowMajor> compute_Rd_mid(const Tensor<double, 3, RowMajor>& Rd0, const Tensor<double, 3, RowMajor>& Rd1, const double beta0, const double beta1) {
 
-        Tensor<double, 3> Rd_mid(ni_cells, nj_cells, 4);
+        Tensor<double, 3, RowMajor> Rd_mid(ni_cells, nj_cells, 4);
 
         const double one_minus_beta1 = 1.0 - beta1;
 
@@ -739,7 +793,7 @@ public:
         return Rd_mid;
     }
 
-    double compute_l2_residual(const Tensor<double, 3>& cv_0, const Tensor<double, 3>& cv_1, const double l2_ref=1.0) {
+    double compute_l2_residual(const Tensor<double, 3, RowMajor>& cv_0, const Tensor<double, 3, RowMajor>& cv_1, const double l2_ref=1.0) {
 
         auto start_time = chrono::high_resolution_clock::now();
 
@@ -815,18 +869,18 @@ int main(int argc, char* argv[]) {
 
     // Declare the tensors outside the loop to avoid repeated allocations.
     // Fixed-size tensors for the given problem dimensions
-    Eigen::Tensor<double, 3> cv_0(ni_cells, nj_cells, n_cv);
-    Eigen::Tensor<double, 3> Rc_0(ni_cells, nj_cells, n_cv);
-    Eigen::Tensor<double, 3> Rc_1(ni_cells, nj_cells, n_cv);
-    Eigen::Tensor<double, 3> Rc_2(ni_cells, nj_cells, n_cv);
-    Eigen::Tensor<double, 3> Rc_3(ni_cells, nj_cells, n_cv);
-    Eigen::Tensor<double, 3> Rc_4(ni_cells, nj_cells, n_cv);
+    Eigen::Tensor<double, 3, RowMajor> cv_0(ni_cells, nj_cells, n_cv);
+    Eigen::Tensor<double, 3, RowMajor> Rc_0(ni_cells, nj_cells, n_cv);
+    Eigen::Tensor<double, 3, RowMajor> Rc_1(ni_cells, nj_cells, n_cv);
+    Eigen::Tensor<double, 3, RowMajor> Rc_2(ni_cells, nj_cells, n_cv);
+    Eigen::Tensor<double, 3, RowMajor> Rc_3(ni_cells, nj_cells, n_cv);
+    Eigen::Tensor<double, 3, RowMajor> Rc_4(ni_cells, nj_cells, n_cv);
 
-    Eigen::Tensor<double, 3> Rd_0(ni_cells, nj_cells, n_cv);
-    Eigen::Tensor<double, 3> Rd_2(ni_cells, nj_cells, n_cv);
-    Eigen::Tensor<double, 3> Rd_20(ni_cells, nj_cells, n_cv);
-    Eigen::Tensor<double, 3> Rd_4(ni_cells, nj_cells, n_cv);
-    Eigen::Tensor<double, 3> Rd_42(ni_cells, nj_cells, n_cv);
+    Eigen::Tensor<double, 3, RowMajor> Rd_0(ni_cells, nj_cells, n_cv);
+    Eigen::Tensor<double, 3, RowMajor> Rd_2(ni_cells, nj_cells, n_cv);
+    Eigen::Tensor<double, 3, RowMajor> Rd_20(ni_cells, nj_cells, n_cv);
+    Eigen::Tensor<double, 3, RowMajor> Rd_4(ni_cells, nj_cells, n_cv);
+    Eigen::Tensor<double, 3, RowMajor> Rd_42(ni_cells, nj_cells, n_cv);
 
     // Hybrid Runge-Kutta coefficients
     vector<double> alphas = {0.25, 0.1667, 0.3750, 0.50, 1.0};
@@ -834,7 +888,7 @@ int main(int argc, char* argv[]) {
 
     double res0 = 1.0;
 
-    int max_iter = 100;
+    int max_iter = 500;
 
     for(int iter = 0; iter < max_iter; iter++) {
 
