@@ -15,6 +15,8 @@
 
 #include <omp.h>
 
+#define CHUNK_SIZE 64
+
 using namespace std;
 using namespace Eigen;
 
@@ -302,7 +304,7 @@ public:
         Tensor<double, 4> flux_faces(ni_cells, nj_cells, 2, 4);
 
         //
-        #pragma omp parallel for collapse(2) schedule(static, 64)
+        #pragma omp parallel for collapse(2) schedule(static, CHUNK_SIZE)
         for (int i = 2; i < ni_cells-2; i++) {
             for (int j = 2; j < nj_cells-2; j++) {
                 for (int k = 1; k < 3; k++) {
@@ -425,7 +427,7 @@ public:
             // flux(ii, jj, 3) -= flux3;
         }
 
-        #pragma omp parallel for collapse(3) schedule(static, 64)
+        #pragma omp parallel for collapse(3) schedule(static, CHUNK_SIZE)
         for (int i = 2; i < ni_cells-2; i++) {
             for (int j = 2; j < nj_cells-2; j++) {
                 for (int l = 0; l < 4; l++) {
@@ -447,7 +449,7 @@ public:
 
         auto start_time = chrono::high_resolution_clock::now();
 
-        #pragma omp parallel for collapse(2) schedule(dynamic, 128)
+        #pragma omp parallel for collapse(2) schedule(dynamic, CHUNK_SIZE)
         for(int i = 1; i < nj_cells-1; i++) {
             for(int j = 1; j < nj_cells-1; j++) {
                 for(int k = 1; k < 3; k++) {
@@ -480,7 +482,7 @@ public:
         auto start_time = chrono::high_resolution_clock::now();
 
         // TODO: lambda can be computed with the dependent variables
-        #pragma omp parallel for collapse(2) schedule(dynamic, 128)
+        #pragma omp parallel for collapse(2) schedule(dynamic, CHUNK_SIZE)
         for(int i = 1; i < nj_cells-1; i++) {
             for(int j = 1; j < nj_cells-1; j++) {
 
@@ -514,7 +516,7 @@ public:
         Tensor<double, 4> dissip_faces(ni_cells, nj_cells, 2, 4);
         // dissip.setZero();
 
-        #pragma omp parallel for collapse(2) schedule(dynamic, 128)
+        #pragma omp parallel for collapse(2) schedule(dynamic, CHUNK_SIZE)
         for(int i = 1; i < nj_cells-2; i++) {
             for(int j = 1; j < nj_cells-2; j++) {
                 for(int k = 1; k < 3; k++) {
@@ -546,7 +548,7 @@ public:
             }
         }
 
-        #pragma omp parallel for collapse(2) schedule(dynamic, 128)
+        #pragma omp parallel for collapse(2) schedule(dynamic, CHUNK_SIZE)
         for(int i = 2; i < nj_cells-2; i++) {
             for(int j = 2; j < nj_cells-2; j++) {
                 for(int l = 0; l < 4; l++) {
@@ -669,7 +671,7 @@ public:
         double sigma = 3.6;
 
         // TODO: remove 'volumes' term here and in apply_dt()
-        #pragma omp parallel for collapse(2) schedule(dynamic, 128)
+        #pragma omp parallel for collapse(2) schedule(dynamic, CHUNK_SIZE)
         for(int i = 2; i < ni_cells-2; i++) {
             for(int j = 2; j < nj_cells-2; j++) {
 
@@ -701,7 +703,7 @@ public:
 
         auto start_time = chrono::high_resolution_clock::now();
 
-        #pragma omp parallel for collapse(2) schedule(dynamic, 128)
+        #pragma omp parallel for collapse(2) schedule(dynamic, CHUNK_SIZE)
         for(int i = 2; i < ni_cells-2; i++) {
             for(int j = 2; j < nj_cells-2; j++) {
 
@@ -725,7 +727,7 @@ public:
 
         const double one_minus_beta1 = 1.0 - beta1;
 
-        #pragma omp parallel for collapse(2) schedule(dynamic, 128)
+        #pragma omp parallel for collapse(2) schedule(dynamic, CHUNK_SIZE)
         for(int i = 2; i < ni_cells-2; i++) {
             for(int j = 2; j < nj_cells-2; j++) {
                 for(int k = 0; k < 4; k++) {
@@ -743,7 +745,7 @@ public:
 
         double residual = 0.0;
 
-        #pragma omp parallel for collapse(2) schedule(dynamic, 128)
+        #pragma omp parallel for collapse(2) schedule(dynamic, CHUNK_SIZE)
         for(int i = 2; i < ni_cells-2; i++ ) {
             for(int j = 2; j < nj_cells-2; j++) {
                 residual = residual + pow(cv_1(i, j, 0) - cv_0(i, j, 0), 2);
@@ -799,7 +801,8 @@ int main(int argc, char* argv[]) {
     // string filename = "naca0012_32.xyz";
     // string filename = "naca0012_64.xyz";
     // string filename = "naca0012_256.xyz";
-    string filename = "naca0012_512.xyz";
+    // string filename = "naca0012_512.xyz";
+    string filename = "naca0012_1024.xyz";
 
     fvm.load_mesh(filename);
     fvm.compute_geometry();
@@ -831,7 +834,7 @@ int main(int argc, char* argv[]) {
 
     double res0 = 1.0;
 
-    int max_iter = 500;
+    int max_iter = 100;
 
     for(int iter = 0; iter < max_iter; iter++) {
 
