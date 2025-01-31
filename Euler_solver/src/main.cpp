@@ -128,9 +128,9 @@ int main(int argc, char* argv[]) {
     double p = 1.0;
 
     TemporalDiscretization FVM(x, y, rho, u, v, E, T, p, T_inf, U_ref, CFL_number, residual_smoothing, k2_coeff, k4_coeff);
-    FVM.RungeKutta(it_max);
+    auto [current_state, Residuals] = FVM.RungeKutta(it_max);
 
-    SpatialDiscretization h_state(x, y, rho, u, v, E, T, p, k2_coeff, k4_coeff, T_inf, U_ref);
+    // SpatialDiscretization h_state(x, y, rho, u, v, E, T, p, k2_coeff, k4_coeff, T_inf, U_ref);
     // SpatialDiscretization h_state(x, y, rho_inf, u_inf, v_inf, E_inf, T_inf, p_inf, k2_coeff, k4_coeff, T_inf, U_ref);
     // h_state.run_even();
     // std::cout << "OMEGA\n" << h_state.OMEGA << std::endl;
@@ -169,18 +169,14 @@ int main(int argc, char* argv[]) {
     // std::cout << "fluxy_3\n" << h_state.fluxy_3 << std::endl;
     // std::cout << "Lambda_I\n" << h_state.Lambda_I << std::endl;
     // std::cout << "Lambda_J\n" << h_state.Lambda_J << std::endl;
-    // std::cout << "fluxx_0\n" << h_state.fluxx_0 << std::endl;
-    // std::cout << "fluxx_1\n" << h_state.fluxx_1 << std::endl;
-    // std::cout << "fluxx_2\n" << h_state.fluxx_2 << std::endl;
-    // std::cout << "fluxx_3\n" << h_state.fluxx_3 << std::endl;
-    // std::cout << "fluxy_0\n" << h_state.fluxy_0 << std::endl;
-    // std::cout << "fluxy_1\n" << h_state.fluxy_1 << std::endl;
-    // std::cout << "fluxy_2\n" << h_state.fluxy_2 << std::endl;
-    // std::cout << "fluxy_3\n" << h_state.fluxy_3 << std::endl;
     // std::cout << "dissipx_0\n" << h_state.dissipx_0 << std::endl;
     // std::cout << "dissipx_1\n" << h_state.dissipx_1 << std::endl;
     // std::cout << "dissipx_2\n" << h_state.dissipx_2 << std::endl;
     // std::cout << "dissipx_3\n" << h_state.dissipx_3 << std::endl;
+    // std::cout << "dissipy_0\n" << h_state.dissipy_0 << std::endl;
+    // std::cout << "dissipy_1\n" << h_state.dissipy_1 << std::endl;
+    // std::cout << "dissipy_2\n" << h_state.dissipy_2 << std::endl;
+    // std::cout << "dissipy_3\n" << h_state.dissipy_3 << std::endl;
     // std::cout << "Rc_0\n" << h_state.Rc_0 << std::endl;
     // std::cout << "Rc_1\n" << h_state.Rc_1 << std::endl;
     // std::cout << "Rc_2\n" << h_state.Rc_2 << std::endl;
@@ -189,95 +185,6 @@ int main(int argc, char* argv[]) {
     // std::cout << "Rd_1\n" << h_state.Rd_1 << std::endl;
     // std::cout << "Rd_2\n" << h_state.Rd_2 << std::endl;
     // std::cout << "Rd_3\n" << h_state.Rd_3 << std::endl;
-
-
-
-    // // auto[q, q_vertex, Residuals] = FVM.RungeKutta(it_max);
-    // // TemporalDiscretization::save_checkpoint(q, {static_cast<int>(Residuals.size())}, Residuals, checkpoint_file);
-    // // write_plot3d_2d(q_vertex, Mach, alpha, 0, 0, rho_inf, U_ref, output_file);
-
-    // // --------------------------------- Multigrid ------------------------------------------------------------------------------------------
-    // Multigrid Multigrid(h_state, CFL_number, residual_smoothing, k2_coeff, k4_coeff);
-    // SpatialDiscretization h2_state = Multigrid.mesh_restriction(h_state);
-    // SpatialDiscretization h4_state = Multigrid.mesh_restriction(h2_state);
-    // SpatialDiscretization h8_state = Multigrid.mesh_restriction(h4_state);
-
-
-    // // Initialize 
-    // std::vector<std::vector<std::vector<double>>> q_vertex;
-    // std::vector<std::vector<double>> Residuals;
-
-    // std::tie(q_vertex, Residuals) = Multigrid.restriction_timestep(h8_state, it_max);
-    // Multigrid.prolongation(h8_state, h4_state);
-    // std::tie(q_vertex, Residuals) = Multigrid.restriction_timestep(h4_state, it_max);
-    // Multigrid.prolongation(h4_state, h2_state);
-    // std::tie(q_vertex, Residuals) = Multigrid.restriction_timestep(h2_state, 1000);
-    // Multigrid.prolongation(h2_state, h_state); // Starting grid
-    // std::tie(q_vertex, Residuals) = Multigrid.restriction_timestep(h_state, 1);
-    // std::vector<double> multigrid_first_residual = Residuals.back();
-        
-    
-    // // W cycle
-    // int i = 1;
-    // while (Multigrid.multigrid_convergence == false) {
-
-    //     std::tie(q_vertex, Residuals) = Multigrid.restriction_timestep(h_state, 1, i, multigrid_first_residual); 
-
-    //     if (Multigrid.multigrid_convergence == true) {
-    //         std::cout << "Convergence reached at iteration " << i << std::endl;
-    //         break;
-    //     }
-
-    //     Multigrid.restriction(h_state, h2_state); // V
-    //     std::tie(q_vertex, Residuals) = Multigrid.restriction_timestep(h2_state, 1, i);
-
-    //     Multigrid.restriction(h2_state, h4_state); // V
-    //     std::tie(q_vertex, Residuals) = Multigrid.restriction_timestep(h4_state, 1, i);
-
-    //     Multigrid.restriction(h4_state, h8_state); // V
-    //     std::tie(q_vertex, Residuals) = Multigrid.restriction_timestep(h8_state, 1, i);
-
-
-    //     Multigrid.prolongation(h8_state, h4_state); // ^
-    //     std::tie(q_vertex, Residuals) = Multigrid.restriction_timestep(h4_state, 1, i);
-
-    //     Multigrid.restriction(h4_state, h8_state); // V
-    //     std::tie(q_vertex, Residuals) = Multigrid.restriction_timestep(h8_state, 1, i);
-
-    //     Multigrid.prolongation(h8_state, h4_state); // ^
-    //     std::tie(q_vertex, Residuals) = Multigrid.restriction_timestep(h4_state, 1, i);
-
-    //     Multigrid.prolongation(h4_state, h2_state); // ^
-    //     std::tie(q_vertex, Residuals) = Multigrid.restriction_timestep(h2_state, 1, i);
-
-    //     Multigrid.restriction(h2_state, h4_state); // V
-    //     std::tie(q_vertex, Residuals) = Multigrid.restriction_timestep(h4_state, 1, i);
-
-    //     Multigrid.restriction(h4_state, h8_state); // V
-    //     std::tie(q_vertex, Residuals) = Multigrid.restriction_timestep(h8_state, 1, i);
-
-    //     Multigrid.prolongation(h8_state, h4_state); // ^
-    //     std::tie(q_vertex, Residuals) = Multigrid.restriction_timestep(h4_state, 1, i);
-
-    //     Multigrid.restriction(h4_state, h8_state); // V
-    //     std::tie(q_vertex, Residuals) = Multigrid.restriction_timestep(h8_state, 1, i);
-
-    //     Multigrid.prolongation(h8_state, h4_state); // ^
-    //     std::tie(q_vertex, Residuals) = Multigrid.restriction_timestep(h4_state, 1, i);
-
-    //     Multigrid.prolongation(h4_state, h2_state); // ^
-    //     std::tie(q_vertex, Residuals) = Multigrid.restriction_timestep(h2_state, 1, i);
-
-    //     Multigrid.prolongation(h2_state, h_state); // ^
-    //     std::tie(q_vertex, Residuals) = Multigrid.restriction_timestep(h_state, 1, i);
-    //     i++;
-    // }
-
-
-    // write_plot3d_2d(q_vertex, Mach, alpha, 0, 0, rho_inf, U_ref, output_file);
-    
-    
-
 
 
     auto end = std::chrono::high_resolution_clock::now();

@@ -13,17 +13,23 @@ public:
     Eigen::ArrayXXd sy_x; // y face x component
     Eigen::ArrayXXd sy_y; // y face y component
     Eigen::ArrayXXd Ds_x; // x face length
-    Eigen::ArrayXXd Ds_y; // y face length
+    Eigen::ArrayXXd Ds_y; // y face length    
+    Eigen::ArrayXXd nx_x; // x face normal x component    
+    Eigen::ArrayXXd nx_y; // x face normal y component    
+    Eigen::ArrayXXd ny_x; // y face normal x component    
+    Eigen::ArrayXXd ny_y; // y face normal y component
+    
     Eigen::ArrayXXd Ds_x_avg; // average x face of the cell
     Eigen::ArrayXXd Ds_y_avg; // average y face of the cell
-    Eigen::ArrayXXd nx_x; // x face normal x component
     Eigen::ArrayXXd nx_x_avg; // average x face normal x component
-    Eigen::ArrayXXd nx_y; // x face normal y component
     Eigen::ArrayXXd nx_y_avg; // average x face normal y component
-    Eigen::ArrayXXd ny_x; // y face normal x component
     Eigen::ArrayXXd ny_x_avg; // average y face normal x component
-    Eigen::ArrayXXd ny_y; // y face normal y component
     Eigen::ArrayXXd ny_y_avg; // average y face normal y component
+    Eigen::ArrayXXd sx_x_avg; // average x face normal x component
+    Eigen::ArrayXXd sx_y_avg; // average x face normal y component
+    Eigen::ArrayXXd sy_x_avg; // average y face normal x component
+    Eigen::ArrayXXd sy_y_avg; // average y face normal y component
+
 
     Eigen::ArrayXXd rho_cells; // Density
     Eigen::ArrayXXd u_cells; // x velocity
