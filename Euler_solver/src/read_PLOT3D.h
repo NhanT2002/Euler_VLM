@@ -13,14 +13,17 @@ std::tuple<Eigen::ArrayXXd, Eigen::ArrayXXd> read_PLOT3D_mesh(const std::string&
 std::tuple<int, int, double, double, double, double, std::vector<std::vector<std::vector<double>>>> read_PLOT3D_solution(const std::string& solution_filename);
 
 // Function to write PLOT3D solution from a file
-void write_plot3d_2d(const std::vector<std::vector<std::vector<double>>>& q,
-                     double mach,
-                     double alpha,
-                     double reyn,
-                     double time,
-                     double rho_ref,
-                     double U_ref,
-                     const std::string& solution_filename = "2D.q");
+void write_plot3d_2d(const Eigen::ArrayXXd& W_0,
+                    const Eigen::ArrayXXd& W_1,
+                    const Eigen::ArrayXXd& W_2,
+                    const Eigen::ArrayXXd& W_3,
+                    double mach,
+                    double alpha,
+                    double reyn,
+                    double time,
+                    double rho_ref,
+                    double U_ref,
+                    const std::string& solution_filename = "2D.q");
 
 
 // Function to write PLOT3D mesh to a file
@@ -30,6 +33,9 @@ void write_PLOT3D_mesh(const std::vector<std::vector<double>>& x,
 
 
 // Function to convert cell centered solution to vertex centered solution
-std::vector<std::vector<std::vector<double>>> cell_dummy_to_vertex_centered_airfoil(const std::vector<std::vector<std::vector<double>>>& q_cell);
+std::tuple<Eigen::ArrayXXd, Eigen::ArrayXXd, Eigen::ArrayXXd, Eigen::ArrayXXd> cell_dummy_to_vertex_centered_airfoil(const Eigen::ArrayXXd& W_0_dummy,
+                                                                                                                    const Eigen::ArrayXXd& W_1_dummy,
+                                                                                                                    const Eigen::ArrayXXd& W_2_dummy,
+                                                                                                                    const Eigen::ArrayXXd& W_3_dummy);
 
 #endif //READ_PLOT3D_H

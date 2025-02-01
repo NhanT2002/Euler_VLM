@@ -64,7 +64,7 @@ Eigen::Array<double, 4, 1> TemporalDiscretization::compute_L2_norm(const Eigen::
     return L2_norms;
 }
 
-std::tuple<SpatialDiscretization, std::vector<std::vector<double>>> TemporalDiscretization::RungeKutta(int it_max) {
+std::tuple<Eigen::ArrayXXd, Eigen::ArrayXXd, Eigen::ArrayXXd, Eigen::ArrayXXd, std::vector<std::vector<double>>> TemporalDiscretization::RungeKutta(int it_max) {
     double convergence_tol = 1e-11;
     double a1 = 0.25; double b1 = 1.0;
     double a2 = 0.1667; double b2 = 0.0;
@@ -291,7 +291,7 @@ std::tuple<SpatialDiscretization, std::vector<std::vector<double>>> TemporalDisc
     }
 
 
-    return {current_state, Residuals};
+    return {current_state.W_0, current_state.W_1, current_state.W_2, current_state.W_3, Residuals};
 }
 
 std::tuple<double, double, double> TemporalDiscretization::compute_coeff() {

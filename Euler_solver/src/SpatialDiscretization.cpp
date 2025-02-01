@@ -356,7 +356,7 @@ void SpatialDiscretization::compute_dummy_cells() {
     Eigen::Array<double, 1, Eigen::Dynamic> M_cells = (u_cells(j_last_cells, Eigen::all).square() + v_cells(j_last_cells, Eigen::all).square()).sqrt()/c_cells; // Mach number
     Eigen::Array<double, 1, Eigen::Dynamic> nx_cells = -1*nx_x(j, Eigen::all);
     Eigen::Array<double, 1, Eigen::Dynamic> ny_cells = -1*nx_y(j, Eigen::all);
-    
+
     for (int i=2; i<ncells_x-2; i++) {
         double& rho_d = rho_cells(j_last_cells, i);
         double& u_d = u_cells(j_last_cells, i);
@@ -497,13 +497,6 @@ void SpatialDiscretization::compute_lambda() {
 
     Lambda_I = (u_cells*sy_x_avg + v_cells*sy_y_avg).abs() + (cc_cells*(sy_x_avg*sy_x_avg+sy_y_avg*sy_y_avg)).sqrt();
     Lambda_J = (u_cells*sx_x_avg + v_cells*sx_y_avg).abs() + (cc_cells*(sx_x_avg*sx_x_avg+sx_y_avg*sx_y_avg)).sqrt();
-
-    // std::cout << "u_cells\n" << u_cells << std::endl;
-    // std::cout << "v_cells\n" << v_cells << std::endl;
-    // std::cout << "sx_x_avg\n" << sx_x_avg << std::endl;
-    // std::cout << "sx_y_avg\n" << sx_y_avg << std::endl;
-    // std::cout << "Lambda_I\n" << Lambda_I << std::endl;
-    // std::cout << "Lambda_J\n" << Lambda_J << std::endl;
     
     halo(Lambda_I);
     halo(Lambda_J);
@@ -515,15 +508,6 @@ std::tuple<Eigen::ArrayXXd, Eigen::ArrayXXd> SpatialDiscretization::compute_epsi
 
     Eigen::ArrayXXd eps2 = k2*gamma_I.max(gamma_Ip1);
     Eigen::ArrayXXd eps4 = (k4-eps2).max(0.0);
-    
-    // std::cout << "p_Im1 =\n" << p_Im1 << std::endl;
-    // std::cout << "p_I =\n" << p_I << std::endl;
-    // std::cout << "p_Ip1 =\n" << p_Ip1 << std::endl;
-    // std::cout << "p_Ip2 =\n" << p_Ip2 << std::endl;
-    // std::cout << "gamma_I =\n" << gamma_I << std::endl;
-    // std::cout << "gamma_Ip1 =\n" << gamma_Ip1 << std::endl;
-    // std::cout << "eps2 =\n" << eps2 << std::endl;
-    // std::cout << "eps4 =\n" << eps4 << std::endl;
 
     return {eps2, eps4};
 }
@@ -540,45 +524,25 @@ void SpatialDiscretization::compute_dissipation() {
 
     auto [eps2_x, eps4_x] = compute_epsilon(p_cells(seqy, seqx_p1), p_cells(seqy, seqx), p_cells(seqy, seqx_m1), p_cells(seqy, seqx_m2), k2_coeff*0.25, k4_coeff*0.015625); // k2=1/4, k4=1/64
     auto [eps2_y, eps4_y] = compute_epsilon(p_cells(seqy_p1, seqx), p_cells(seqy, seqx), p_cells(seqy_m1, seqx), p_cells(seqy_m2, seqx), k2_coeff*0.25, k4_coeff*0.015625); // k2=1/4, k4=1/64
-    // std::cout << "eps2_y =\n" << eps2_y << std::endl;
-    // std::cout << "eps4_y =\n" << eps4_y << std::endl;
-    // std::cout << "eps2_x =\n" << eps2_x << std::endl;
-    // std::cout << "eps4_x =\n" << eps4_x << std::endl;
 
     Eigen::ArrayXXd Lambda_x_I = 0.5*(Lambda_I(seqy, seqx) + Lambda_I(seqy, seqx_m1));
     Eigen::ArrayXXd Lambda_x_J = 0.5*(Lambda_J(seqy, seqx) + Lambda_J(seqy, seqx_m1));
     Eigen::ArrayXXd Lambda_x_S = Lambda_x_I + Lambda_x_J;
-    // std::cout << "Lambda_x_I = \n" << Lambda_x_I << std::endl;
-    // std::cout << "Lambda_x_J = \n" << Lambda_x_J << std::endl;
-    // std::cout << "Lambda_x_S = \n" << Lambda_x_S << std::endl;
 
     Eigen::ArrayXXd Lambda_y_I = 0.5*(Lambda_I(seqy, seqx) + Lambda_I(seqy_m1, seqx));
     Eigen::ArrayXXd Lambda_y_J = 0.5*(Lambda_J(seqy, seqx) + Lambda_J(seqy_m1, seqx));
     Eigen::ArrayXXd Lambda_y_S = Lambda_y_I + Lambda_y_J;
-    // std::cout << "Lambda_I = \n" << Lambda_I << std::endl;
-    // std::cout << "Lambda_J = \n" << Lambda_J << std::endl;
-    // std::cout << "Lambda_y_I = \n" << Lambda_y_I << std::endl;
-    // std::cout << "Lambda_y_J = \n" << Lambda_y_J << std::endl;
-    // std::cout << "Lambda_y_S = \n" << Lambda_y_S << std::endl;
 
     // Dissipation
     dissipx_0 = Lambda_x_S*(eps2_x*(W_0(seqy, seqx_m1)-W_0(seqy, seqx)) - eps4_x*(W_0(seqy, seqx_m2)-3*W_0(seqy, seqx_m1)+3*W_0(seqy, seqx)-W_0(seqy, seqx_p1)));
     dissipx_1 = Lambda_x_S*(eps2_x*(W_1(seqy, seqx_m1)-W_1(seqy, seqx)) - eps4_x*(W_1(seqy, seqx_m2)-3*W_1(seqy, seqx_m1)+3*W_1(seqy, seqx)-W_1(seqy, seqx_p1)));
     dissipx_2 = Lambda_x_S*(eps2_x*(W_2(seqy, seqx_m1)-W_2(seqy, seqx)) - eps4_x*(W_2(seqy, seqx_m2)-3*W_2(seqy, seqx_m1)+3*W_2(seqy, seqx)-W_2(seqy, seqx_p1)));
     dissipx_3 = Lambda_x_S*(eps2_x*(W_3(seqy, seqx_m1)-W_3(seqy, seqx)) - eps4_x*(W_3(seqy, seqx_m2)-3*W_3(seqy, seqx_m1)+3*W_3(seqy, seqx)-W_3(seqy, seqx_p1)));
-    // std::cout << "dissipx_0 = \n" << dissipx_0 << std::endl;
-    // std::cout << "dissipx_1 = \n" << dissipx_1 << std::endl;
-    // std::cout << "dissipx_2 = \n" << dissipx_2 << std::endl;
-    // std::cout << "dissipx_3 = \n" << dissipx_3 << std::endl;
 
     dissipy_0 = Lambda_y_S*(eps2_y*(W_0(seqy_m1, seqx)-W_0(seqy, seqx)) - eps4_y*(W_0(seqy_m2, seqx)-3*W_0(seqy_m1, seqx)+3*W_0(seqy, seqx)-W_0(seqy_p1, seqx)));
     dissipy_1 = Lambda_y_S*(eps2_y*(W_1(seqy_m1, seqx)-W_1(seqy, seqx)) - eps4_y*(W_1(seqy_m2, seqx)-3*W_1(seqy_m1, seqx)+3*W_1(seqy, seqx)-W_1(seqy_p1, seqx)));
     dissipy_2 = Lambda_y_S*(eps2_y*(W_2(seqy_m1, seqx)-W_2(seqy, seqx)) - eps4_y*(W_2(seqy_m2, seqx)-3*W_2(seqy_m1, seqx)+3*W_2(seqy, seqx)-W_2(seqy_p1, seqx)));
     dissipy_3 = Lambda_y_S*(eps2_y*(W_3(seqy_m1, seqx)-W_3(seqy, seqx)) - eps4_y*(W_3(seqy_m2, seqx)-3*W_3(seqy_m1, seqx)+3*W_3(seqy, seqx)-W_3(seqy_p1, seqx)));
-    // std::cout << "dissipy_0 = \n" << dissipy_0 << std::endl;
-    // std::cout << "dissipy_1 = \n" << dissipy_1 << std::endl;
-    // std::cout << "dissipy_2 = \n" << dissipy_2 << std::endl;
-    // std::cout << "dissipy_3 = \n" << dissipy_3 << std::endl;
   
 
     // Boundary conditions -----------------------------------------------to test if effective -----------------------------------------------
@@ -587,28 +551,12 @@ void SpatialDiscretization::compute_dissipation() {
     dissipy_1.row(1) = Lambda_y_S.row(1)*(eps2_y.row(1)*(W_1(2,seqx)-W_1(3,seqx)) - eps4_y.row(1)*(2*W_1(3,seqx) - W_1(2,seqx) - W_1(4,seqx)));
     dissipy_2.row(1) = Lambda_y_S.row(1)*(eps2_y.row(1)*(W_2(2,seqx)-W_2(3,seqx)) - eps4_y.row(1)*(2*W_2(3,seqx) - W_2(2,seqx) - W_2(4,seqx)));
     dissipy_3.row(1) = Lambda_y_S.row(1)*(eps2_y.row(1)*(W_3(2,seqx)-W_3(3,seqx)) - eps4_y.row(1)*(2*W_3(3,seqx) - W_3(2,seqx) - W_3(4,seqx)));
-    // std::cout << "dissipy_0.row(1) = " << dissipy_0.row(1) << std::endl;
-    // std::cout << "dissipy_1.row(1) = " << dissipy_1.row(1) << std::endl;
-    // std::cout << "dissipy_2.row(1) = " << dissipy_2.row(1) << std::endl;
-    // std::cout << "dissipy_3.row(1) = " << dissipy_3.row(1) << std::endl;
-
-    // std::cout << "Lambda_y_S.row(1) = " << Lambda_y_S.row(1) << std::endl;
-    // std::cout << "eps2_y.row(1) = " << eps2_y.row(1) << std::endl;
-    // std::cout << "eps4_y.row(1) = " << eps4_y.row(1) << std::endl;
 
     // Calculate dissipx for cells (2, i)
     dissipy_0.row(0) = Lambda_y_S.row(0)*(eps2_y.row(0)*(W_0(2,seqx)-W_0(3,seqx)) - eps4_y.row(0)*(2*W_0(3,seqx) - W_0(2,seqx) - W_0(4,seqx)));
     dissipy_1.row(0) = Lambda_y_S.row(0)*(eps2_y.row(0)*(W_1(2,seqx)-W_1(3,seqx)) - eps4_y.row(0)*(2*W_1(3,seqx) - W_1(2,seqx) - W_1(4,seqx)));
     dissipy_2.row(0) = Lambda_y_S.row(0)*(eps2_y.row(0)*(W_2(2,seqx)-W_2(3,seqx)) - eps4_y.row(0)*(2*W_2(3,seqx) - W_2(2,seqx) - W_2(4,seqx)));
     dissipy_3.row(0) = Lambda_y_S.row(0)*(eps2_y.row(0)*(W_3(2,seqx)-W_3(3,seqx)) - eps4_y.row(0)*(2*W_3(3,seqx) - W_3(2,seqx) - W_3(4,seqx)));
-    // std::cout << "disipy_0.row(0) = " << dissipy_0.row(0) << std::endl;
-    // std::cout << "disipy_1.row(0) = " << dissipy_1.row(0) << std::endl;
-    // std::cout << "disipy_2.row(0) = " << dissipy_2.row(0) << std::endl;
-    // std::cout << "disipy_3.row(0) = " << dissipy_3.row(0) << std::endl;
-
-    // std::cout << "Lambda_y_S.row(2) = " << Lambda_y_S.row(2) << std::endl;
-    // std::cout << "eps2_y.row(0) = " << eps2_y.row(0) << std::endl;
-    // std::cout << "eps4_y.row(0) = " << eps4_y.row(0) << std::endl;
 }
 
 void SpatialDiscretization::compute_Rc() {
@@ -637,11 +585,6 @@ void SpatialDiscretization::compute_Rd() {
     Rd_1 = dissipx_1(seqy, seqx) - dissipx_1(seqy, seqx_p1) + dissipy_1(seqy, seqx) - dissipy_1(seqy_p1, seqx);
     Rd_2 = dissipx_2(seqy, seqx) - dissipx_2(seqy, seqx_p1) + dissipy_2(seqy, seqx) - dissipy_2(seqy_p1, seqx);
     Rd_3 = dissipx_3(seqy, seqx) - dissipx_3(seqy, seqx_p1) + dissipy_3(seqy, seqx) - dissipy_3(seqy_p1, seqx);
-
-    // std::cout << "Rd_0 = " << Rd_0 << std::endl;
-    // std::cout << "Rd_1 = " << Rd_1 << std::endl;
-    // std::cout << "Rd_2 = " << Rd_2 << std::endl;
-    // std::cout << "Rd_3 = " << Rd_3 << std::endl;
 }
 
 void SpatialDiscretization::update_Rd0() {

@@ -128,68 +128,18 @@ int main(int argc, char* argv[]) {
     double p = 1.0;
 
     TemporalDiscretization FVM(x, y, rho, u, v, E, T, p, T_inf, U_ref, CFL_number, residual_smoothing, k2_coeff, k4_coeff);
-    auto [current_state, Residuals] = FVM.RungeKutta(it_max);
-
-    // SpatialDiscretization h_state(x, y, rho, u, v, E, T, p, k2_coeff, k4_coeff, T_inf, U_ref);
-    // SpatialDiscretization h_state(x, y, rho_inf, u_inf, v_inf, E_inf, T_inf, p_inf, k2_coeff, k4_coeff, T_inf, U_ref);
-    // h_state.run_even();
-    // std::cout << "OMEGA\n" << h_state.OMEGA << std::endl;
-    // std::cout << "sx_x\n" << h_state.sx_x << std::endl;
-    // std::cout << "sx_y\n" << h_state.sx_y << std::endl;
-    // std::cout << "sy_x\n" << h_state.sy_x << std::endl;
-    // std::cout << "sy_y\n" << h_state.sy_y << std::endl;
-    // std::cout << "Ds_x\n" << h_state.Ds_x << std::endl;
-    // std::cout << "Ds_x_avg\n" << h_state.Ds_x_avg << std::endl;
-    // std::cout << "Ds_y\n" << h_state.Ds_y << std::endl;
-    // std::cout << "Ds_y_avg\n" << h_state.Ds_y_avg << std::endl;
-    // std::cout << "nx_x\n" << h_state.nx_x << std::endl;
-    // std::cout << "nx_x_avg\n" << h_state.nx_x_avg << std::endl;
-    // std::cout << "nx_y\n" << h_state.nx_y << std::endl;
-    // std::cout << "nx_y_avg\n" << h_state.nx_y_avg << std::endl;
-    // std::cout << "ny_x\n" << h_state.ny_x << std::endl;
-    // std::cout << "ny_x_avg\n" << h_state.ny_x_avg << std::endl;
-    // std::cout << "ny_y\n" << h_state.ny_y << std::endl;
-    // std::cout << "ny_y_avg\n" << h_state.ny_y_avg << std::endl;
-    // std::cout << "rho_cells\n" << h_state.rho_cells << std::endl;
-    // std::cout << "u_cells\n" << h_state.u_cells << std::endl;
-    // std::cout << "v_cells\n" << h_state.v_cells << std::endl;
-    // std::cout << "E_cells\n" << h_state.E_cells << std::endl;
-    // std::cout << "p_cells\n" << h_state.p_cells << std::endl;
-    // std::cout << "W_0\n" << h_state.W_0 << std::endl;
-    // std::cout << "W_1\n" << h_state.W_1 << std::endl;
-    // std::cout << "W_2\n" << h_state.W_2 << std::endl;
-    // std::cout << "W_3\n" << h_state.W_3 << std::endl;
-    // std::cout << "fluxx_0\n" << h_state.fluxx_0 << std::endl;
-    // std::cout << "fluxx_1\n" << h_state.fluxx_1 << std::endl;
-    // std::cout << "fluxx_2\n" << h_state.fluxx_2 << std::endl;
-    // std::cout << "fluxx_3\n" << h_state.fluxx_3 << std::endl;
-    // std::cout << "fluxy_0\n" << h_state.fluxy_0 << std::endl;
-    // std::cout << "fluxy_1\n" << h_state.fluxy_1 << std::endl;
-    // std::cout << "fluxy_2\n" << h_state.fluxy_2 << std::endl;
-    // std::cout << "fluxy_3\n" << h_state.fluxy_3 << std::endl;
-    // std::cout << "Lambda_I\n" << h_state.Lambda_I << std::endl;
-    // std::cout << "Lambda_J\n" << h_state.Lambda_J << std::endl;
-    // std::cout << "dissipx_0\n" << h_state.dissipx_0 << std::endl;
-    // std::cout << "dissipx_1\n" << h_state.dissipx_1 << std::endl;
-    // std::cout << "dissipx_2\n" << h_state.dissipx_2 << std::endl;
-    // std::cout << "dissipx_3\n" << h_state.dissipx_3 << std::endl;
-    // std::cout << "dissipy_0\n" << h_state.dissipy_0 << std::endl;
-    // std::cout << "dissipy_1\n" << h_state.dissipy_1 << std::endl;
-    // std::cout << "dissipy_2\n" << h_state.dissipy_2 << std::endl;
-    // std::cout << "dissipy_3\n" << h_state.dissipy_3 << std::endl;
-    // std::cout << "Rc_0\n" << h_state.Rc_0 << std::endl;
-    // std::cout << "Rc_1\n" << h_state.Rc_1 << std::endl;
-    // std::cout << "Rc_2\n" << h_state.Rc_2 << std::endl;
-    // std::cout << "Rc_3\n" << h_state.Rc_3 << std::endl;
-    // std::cout << "Rd_0\n" << h_state.Rd_0 << std::endl;
-    // std::cout << "Rd_1\n" << h_state.Rd_1 << std::endl;
-    // std::cout << "Rd_2\n" << h_state.Rd_2 << std::endl;
-    // std::cout << "Rd_3\n" << h_state.Rd_3 << std::endl;
+    auto [W_0, W_1, W_2, W_3, Residuals] = FVM.RungeKutta(it_max);
 
 
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> serialDuration = end - start;
     std::cout << "\nSolver duration: " << serialDuration.count() << " seconds\n";
+
+    auto [W_0_vertex, W_1_vertex, W_2_vertex, W_3_vertex] = cell_dummy_to_vertex_centered_airfoil(W_0(Eigen::seq(1, W_0.rows()-2), Eigen::seq(1, W_0.cols()-2)),
+                                                                                                  W_1(Eigen::seq(1, W_0.rows()-2), Eigen::seq(1, W_0.cols()-2)),
+                                                                                                  W_2(Eigen::seq(1, W_0.rows()-2), Eigen::seq(1, W_0.cols()-2)),
+                                                                                                  W_3(Eigen::seq(1, W_0.rows()-2), Eigen::seq(1, W_0.cols()-2)));
+    write_plot3d_2d(W_0_vertex, W_1_vertex, W_2_vertex, W_3_vertex, Mach, alpha, 0, 0, rho_inf, U_ref, output_file);
 
     return 0;
 

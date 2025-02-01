@@ -72,7 +72,7 @@ public:
 
     std::tuple<double, double, double> compute_coeff();
 
-    std::tuple<SpatialDiscretization, std::vector<std::vector<double>>> RungeKutta(int it_max = 20000);
+    std::tuple<Eigen::ArrayXXd, Eigen::ArrayXXd, Eigen::ArrayXXd, Eigen::ArrayXXd, std::vector<std::vector<double>>> RungeKutta(int it_max = 20000);
 
     void run();
 };

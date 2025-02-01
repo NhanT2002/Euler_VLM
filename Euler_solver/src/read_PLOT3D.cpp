@@ -109,19 +109,21 @@ std::tuple<int, int, double, double, double, double, std::vector<std::vector<std
     return std::make_tuple(ni, nj, mach, alpha, reyn, time, q);
 }
 
-void write_plot3d_2d(
-    const std::vector<std::vector<std::vector<double>>>& q,
-    double mach,
-    double alpha,
-    double reyn,
-    double time,
-    double rho_ref,
-    double U_ref,
-    const std::string& solution_filename)
+void write_plot3d_2d(const Eigen::ArrayXXd& W_0,
+                    const Eigen::ArrayXXd& W_1,
+                    const Eigen::ArrayXXd& W_2,
+                    const Eigen::ArrayXXd& W_3,
+                    double mach,
+                    double alpha,
+                    double reyn,
+                    double time,
+                    double rho_ref,
+                    double U_ref,
+                    const std::string& solution_filename)
 {
     // Get dimensions
-    auto nj = q.size();
-    auto ni = q[0].size();
+    auto nj = W_0.rows();
+    auto ni = W_0.cols();
 
     // Write solution file (2D.q)
     std::ofstream solution_file(solution_filename);
@@ -135,24 +137,24 @@ void write_plot3d_2d(
                   << alpha << " " << reyn << " " << time << "\n";
 
     // Write flow variables (density, x-momentum, y-momentum, energy)
-    for (size_t j = 0; j < nj; ++j) {
-        for (size_t i = 0; i < ni; ++i) {  // Reverse the order: i first, then j
-            solution_file << std::scientific << std::setprecision(16) << q[j][i][0]*rho_ref << "\n";
+    for (auto j = 0; j < nj; ++j) {
+        for (auto i = 0; i < ni; ++i) {  // Reverse the order: i first, then j
+            solution_file << std::scientific << std::setprecision(16) << W_0(j, i)*rho_ref << "\n";
         }
     }
-    for (size_t j = 0; j < nj; ++j) {
-        for (size_t i = 0; i < ni; ++i) {  // Reverse the order: i first, then j
-            solution_file << std::scientific << std::setprecision(16) << q[j][i][1]*rho_ref*U_ref << "\n";
+    for (auto j = 0; j < nj; ++j) {
+        for (auto i = 0; i < ni; ++i) {  // Reverse the order: i first, then j
+            solution_file << std::scientific << std::setprecision(16) << W_1(j, i)*rho_ref*U_ref << "\n";
         }
     }
-    for (size_t j = 0; j < nj; ++j) {
-        for (size_t i = 0; i < ni; ++i) {  // Reverse the order: i first, then j
-            solution_file << std::scientific << std::setprecision(16) << q[j][i][2]*rho_ref*U_ref << "\n";
+    for (auto j = 0; j < nj; ++j) {
+        for (auto i = 0; i < ni; ++i) {  // Reverse the order: i first, then j
+            solution_file << std::scientific << std::setprecision(16) << W_2(j, i)*rho_ref*U_ref << "\n";
         }
     }
-    for (size_t j = 0; j < nj; ++j) {
-        for (size_t i = 0; i < ni; ++i) {  // Reverse the order: i first, then j
-            solution_file << std::scientific << std::setprecision(16) << q[j][i][3]*rho_ref*U_ref*U_ref << "\n";
+    for (auto j = 0; j < nj; ++j) {
+        for (auto i = 0; i < ni; ++i) {  // Reverse the order: i first, then j
+            solution_file << std::scientific << std::setprecision(16) << W_3(j, i)*rho_ref*U_ref*U_ref << "\n";
         }
     }
     solution_file.close();  // Close the solution file
@@ -198,32 +200,36 @@ void write_PLOT3D_mesh(const std::vector<std::vector<double>>& x,
     std::cout << "PLOT3D file " << mesh_filename <<  " written successfully." << std::endl;
 }
 
-std::vector<std::vector<std::vector<double>>> cell_dummy_to_vertex_centered_airfoil(const std::vector<std::vector<std::vector<double>>>& q_cell)
+std::tuple<Eigen::ArrayXXd, Eigen::ArrayXXd, Eigen::ArrayXXd, Eigen::ArrayXXd> cell_dummy_to_vertex_centered_airfoil(const Eigen::ArrayXXd& W_0_dummy,
+                                                                                                                    const Eigen::ArrayXXd& W_1_dummy,
+                                                                                                                    const Eigen::ArrayXXd& W_2_dummy,
+                                                                                                                    const Eigen::ArrayXXd& W_3_dummy)
 {
     // Get dimensions
-    const auto nj_cell = q_cell.size();
-    const auto ni_cell = q_cell[0].size();
-    const auto num_vars = q_cell[0][0].size();
+    const auto nj_cell = W_0_dummy.rows();
+    const auto ni_cell = W_0_dummy.cols();
+
 
     // The vertex-centered grid will be reduced in both directions to exclude the dummy cells
-    const auto ni_vertex = ni_cell + 1;
+    const auto ni_vertex = ni_cell - 1; // Excluding one dummy cell at the start and one at the end
     const auto nj_vertex = nj_cell - 1; // Excluding one dummy cell at the start and one at the end
 
     // Initialize an array for vertex-centered data
-    std::vector q_vertex(nj_vertex,
-        std::vector(ni_vertex, std::vector(num_vars, 0.0)));
+    Eigen::ArrayXXd W_0_vertex(nj_vertex, ni_vertex);
+    Eigen::ArrayXXd W_1_vertex(nj_vertex, ni_vertex);
+    Eigen::ArrayXXd W_2_vertex(nj_vertex, ni_vertex);
+    Eigen::ArrayXXd W_3_vertex(nj_vertex, ni_vertex);
+
 
     // Compute the average of adjacent cell-centered values for interior vertices
-    for (size_t j = 0; j < nj_vertex; ++j) {
-        for (size_t i = 0; i < ni_vertex; ++i) {
-            for (size_t n = 0; n < num_vars; ++n) {
-                q_vertex[j][i][n] = 0.25 * (q_cell[j][i % ni_cell][n] +
-                                            q_cell[j][(i - 1 + ni_cell) % ni_cell][n] +
-                                            q_cell[j + 1][(i - 1 + ni_cell) % ni_cell][n] +
-                                            q_cell[j + 1][i % ni_cell][n]);
-            }
+    for (auto j = 0; j < nj_vertex; ++j) {
+        for (auto i = 0; i < ni_vertex; ++i) {
+            W_0_vertex(j, i) = 0.25 * (W_0_dummy(j,i) + W_0_dummy(j+1,i) + W_0_dummy(j,i+1) + W_0_dummy(j+1,i+1));
+            W_1_vertex(j, i) = 0.25 * (W_1_dummy(j,i) + W_1_dummy(j+1,i) + W_1_dummy(j,i+1) + W_1_dummy(j+1,i+1));
+            W_2_vertex(j, i) = 0.25 * (W_2_dummy(j,i) + W_2_dummy(j+1,i) + W_2_dummy(j,i+1) + W_2_dummy(j+1,i+1));
+            W_3_vertex(j, i) = 0.25 * (W_3_dummy(j,i) + W_3_dummy(j+1,i) + W_3_dummy(j,i+1) + W_3_dummy(j+1,i+1));
         }
     }
 
-    return q_vertex; // Return the vertex-centered data
+    return {W_0_vertex, W_1_vertex, W_2_vertex, W_3_vertex}; // Return the vertex-centered data
 }
