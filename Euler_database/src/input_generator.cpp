@@ -12,9 +12,9 @@ Mach = {MACH}
 alpha = {ALPHA}
 p_inf = 1E5
 T_inf = 300.0
-CFL_number = 7.5
-residual_smoothing = 1
-k2 = 1.0
+CFL_number = 3.6
+residual_smoothing = 0
+k2 = 2.0
 k4 = 2.0
 it_max = 10000
 output_file = {OUTPUT_FILE}
@@ -56,13 +56,13 @@ int main(int argc, char* argv[]) {
 
     // Range of Mach and alpha values
     double machStart = 0.3, machEnd = 1.3, machStep = 0.1;
-    double alphaStart = -5.0, alphaEnd = 12.0, alphaStep = 0.5;
+    double alphaStart = -5.0, alphaEnd = 12.0, alphaStep = 0.1;
 
     // Default number of threads
     int numThreads = 4;
 
     // Directory to store input files
-    std::string directory = "input_files/";
+    std::string directory = "input_files_Mach08/";
 
     // Create input files for each combination of Mach and alpha
     for (double mach = machStart; mach <= machEnd; mach += machStep) {
