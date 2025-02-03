@@ -162,8 +162,8 @@ void write_plot3d_2d(const Eigen::ArrayXXd& W_0,
     std::cout << "PLOT3D file " << solution_filename <<  " written successfully." << std::endl;
 }
 
-void write_PLOT3D_mesh(const std::vector<std::vector<double>>& x, 
-                       const std::vector<std::vector<double>>& y, 
+void write_PLOT3D_mesh(const Eigen::ArrayXXd& x, 
+                       const Eigen::ArrayXXd& y, 
                        const std::string& mesh_filename) {
     // Open the file
     std::ofstream file(mesh_filename);
@@ -172,8 +172,8 @@ void write_PLOT3D_mesh(const std::vector<std::vector<double>>& x,
     }
 
     // Get the dimensions of the grid
-    int nx = x[0].size(); // Number of points in the x-direction
-    int ny = x.size();    // Number of points in the y-direction
+    int nx = x.rows(); // Number of points in the x-direction
+    int ny = x.cols();    // Number of points in the y-direction
 
     // Write the dimensions of the grid (single block)
     file << nx << " " << ny << "\n";
@@ -181,7 +181,7 @@ void write_PLOT3D_mesh(const std::vector<std::vector<double>>& x,
     // Write the x-coordinates
     for (int j = 0; j < ny; ++j) {
         for (int i = 0; i < nx; ++i) {
-            file << x[j][i] << " ";
+            file << x(j, i) << " ";
         }
         file << "\n";
     }
@@ -189,7 +189,7 @@ void write_PLOT3D_mesh(const std::vector<std::vector<double>>& x,
     // Write the y-coordinates
     for (int j = 0; j < ny; ++j) {
         for (int i = 0; i < nx; ++i) {
-            file << y[j][i] << " ";
+            file << y(j, i) << " ";
         }
         file << "\n";
     }

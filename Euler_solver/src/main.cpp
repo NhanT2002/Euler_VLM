@@ -13,7 +13,7 @@
 #include <sstream>
 #include <Eigen/Dense>
 
-void read_input_file(const std::string& filename, double& Mach, double& alpha, double& p_inf, double& T_inf, double& CFL_number, 
+void read_input_file(const std::string& filename, double& Mach, double& alpha, double& p_inf, double& T_inf, int& multigrid, double& CFL_number, 
                      int& residual_smoothing, double& k2, double& k4, int& it_max, std::string& output_file, std::string& checkpoint_file, 
                      std::string& mesh_file, int& num_threads) {
     std::ifstream inputFile(filename);
@@ -37,6 +37,8 @@ void read_input_file(const std::string& filename, double& Mach, double& alpha, d
                 iss >> p_inf;
             } else if (key == "T_inf") {
                 iss >> T_inf;
+            } else if (key == "multigrid") {
+                iss >> multigrid;
             } else if (key == "CFL_number") {
                 iss >> CFL_number;
             } else if (key == "residual_smoothing") {
@@ -66,6 +68,7 @@ void read_input_file(const std::string& filename, double& Mach, double& alpha, d
     std::cout << "alpha = " << alpha / M_PI * 180.0<< "\n";
     std::cout << "p_inf = " << p_inf << "\n";
     std::cout << "T_inf = " << T_inf << "\n";
+    std::cout << "multigrid = " << multigrid << "\n";
     std::cout << "CFL_number = " << CFL_number << "\n";
     std::cout << "residual_smoothing = " << residual_smoothing << "\n";
     std::cout << "k2 = " << k2 << "\n";
@@ -87,10 +90,10 @@ int main(int argc, char* argv[]) {
 
     // Read parameters from the input file
     double Mach, alpha, p_inf, T_inf, CFL_number, k2_coeff, k4_coeff;
-    int residual_smoothing, it_max, num_threads;
+    int multigrid, residual_smoothing, it_max, num_threads;
     std::string output_file, checkpoint_file, mesh_file;
 
-    read_input_file(input_filename, Mach, alpha, p_inf, T_inf, CFL_number, residual_smoothing, k2_coeff, k4_coeff, it_max, output_file, checkpoint_file, mesh_file, num_threads);
+    read_input_file(input_filename, Mach, alpha, p_inf, T_inf, multigrid, CFL_number, residual_smoothing, k2_coeff, k4_coeff, it_max, output_file, checkpoint_file, mesh_file, num_threads);
 
     omp_set_num_threads(num_threads); // Set number of threads
     int max_threads = omp_get_max_threads();
@@ -127,19 +130,88 @@ int main(int argc, char* argv[]) {
     double T = 1.0;
     double p = 1.0;
 
-    TemporalDiscretization FVM(x, y, rho, u, v, E, T, p, T_inf, U_ref, CFL_number, residual_smoothing, k2_coeff, k4_coeff);
-    auto [W_0, W_1, W_2, W_3, Residuals] = FVM.RungeKutta(it_max);
+    if (multigrid == 1) {
+        Eigen::ArrayXXd W_0, W_1, W_2, W_3;
+        std::vector<std::vector<double>> Residuals;
+
+        SpatialDiscretization h_state(x, y, rho, u, v, E, T, p, k2_coeff, k4_coeff, T_inf, U_ref);
+        Multigrid multigrid_solver(h_state, CFL_number, residual_smoothing, k2_coeff, k4_coeff);
+
+        SpatialDiscretization h2_state = multigrid_solver.mesh_restriction(h_state);    
+        multigrid_solver.restriction(h_state, h2_state);
+        SpatialDiscretization h4_state = multigrid_solver.mesh_restriction(h2_state);
+        multigrid_solver.restriction(h2_state, h4_state);
+        SpatialDiscretization h8_state = multigrid_solver.mesh_restriction(h4_state);
+        multigrid_solver.restriction(h4_state, h8_state);
+
+        std::tie(W_0, W_1, W_2, W_3, Residuals) = multigrid_solver.restriction_timestep(h8_state, it_max);
+        multigrid_solver.prolongation(h8_state, h4_state);
+        std::tie(W_0, W_1, W_2, W_3, Residuals) = multigrid_solver.restriction_timestep(h4_state, it_max);
+        multigrid_solver.prolongation(h4_state, h2_state);
+        std::tie(W_0, W_1, W_2, W_3, Residuals) = multigrid_solver.restriction_timestep(h2_state, it_max/10);
+        multigrid_solver.prolongation(h2_state, h_state); // Starting grid
+        multigrid_solver.restriction_timestep(h_state, 1);
+
+        // W cycle
+        for (int it = 1; it < it_max; it++) {
+            
+            multigrid_solver.restriction(h_state, h2_state);
+            multigrid_solver.restriction_timestep(h2_state, 1, -1);
+            multigrid_solver.prolongation(h2_state, h_state);
+            h_state.run_even();
+
+            // multigrid_solver.restriction(h_state, h2_state);
+            // multigrid_solver.restriction_timestep(h2_state, 1, -1);
+            // multigrid_solver.restriction(h2_state, h4_state);
+            // multigrid_solver.restriction_timestep(h4_state, 1, -1);
+            // multigrid_solver.restriction(h4_state, h8_state);
+            // multigrid_solver.restriction_timestep(h8_state, 1, -1);
+
+            // multigrid_solver.prolongation(h8_state, h4_state);
+            // multigrid_solver.restriction_timestep(h4_state, 1, -1);
+            // multigrid_solver.restriction(h4_state, h8_state);
+            // multigrid_solver.restriction_timestep(h8_state, 1, -1);
+            // multigrid_solver.prolongation(h8_state, h4_state);
+            // multigrid_solver.prolongation(h4_state, h2_state);
+            // multigrid_solver.restriction_timestep(h2_state, 1, -1);
+
+            // multigrid_solver.restriction(h2_state, h4_state);
+            // multigrid_solver.restriction_timestep(h4_state, 1, -1);
+            // multigrid_solver.restriction(h4_state, h8_state);
+            // multigrid_solver.restriction_timestep(h8_state, 1, -1);
+            // multigrid_solver.prolongation(h8_state, h4_state);
+            // multigrid_solver.restriction_timestep(h4_state, 1, -1);
+            // multigrid_solver.restriction(h4_state, h8_state);
+            // multigrid_solver.restriction_timestep(h8_state, 1, -1);
+
+            // multigrid_solver.prolongation(h8_state, h4_state);
+            // multigrid_solver.prolongation(h4_state, h2_state);
+            // multigrid_solver.prolongation(h2_state, h_state);
+
+            std::tie(W_0, W_1, W_2, W_3, Residuals) = multigrid_solver.restriction_timestep(h_state, 1, it);
+            if (multigrid_solver.multigrid_convergence) {
+                break;
+            }
+        }
+    }
+
+    else {
+        TemporalDiscretization FVM(x, y, rho, u, v, E, T, p, T_inf, U_ref, CFL_number, residual_smoothing, k2_coeff, k4_coeff);
+        auto [W_0, W_1, W_2, W_3, Residuals] = FVM.RungeKutta(it_max);
+    }
+
+    
 
 
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> serialDuration = end - start;
     std::cout << "\nSolver duration: " << serialDuration.count() << " seconds\n";
 
-    auto [W_0_vertex, W_1_vertex, W_2_vertex, W_3_vertex] = cell_dummy_to_vertex_centered_airfoil(W_0(Eigen::seq(1, W_0.rows()-2), Eigen::seq(1, W_0.cols()-2)),
-                                                                                                  W_1(Eigen::seq(1, W_0.rows()-2), Eigen::seq(1, W_0.cols()-2)),
-                                                                                                  W_2(Eigen::seq(1, W_0.rows()-2), Eigen::seq(1, W_0.cols()-2)),
-                                                                                                  W_3(Eigen::seq(1, W_0.rows()-2), Eigen::seq(1, W_0.cols()-2)));
-    write_plot3d_2d(W_0_vertex, W_1_vertex, W_2_vertex, W_3_vertex, Mach, alpha, 0, 0, rho_inf, U_ref, output_file);
+    // auto [W_0_vertex, W_1_vertex, W_2_vertex, W_3_vertex] = cell_dummy_to_vertex_centered_airfoil(W_0(Eigen::seq(1, W_0.rows()-2), Eigen::seq(1, W_0.cols()-2)),
+    //                                                                                               W_1(Eigen::seq(1, W_0.rows()-2), Eigen::seq(1, W_0.cols()-2)),
+    //                                                                                               W_2(Eigen::seq(1, W_0.rows()-2), Eigen::seq(1, W_0.cols()-2)),
+    //                                                                                               W_3(Eigen::seq(1, W_0.rows()-2), Eigen::seq(1, W_0.cols()-2)));
+    // write_plot3d_2d(W_0_vertex, W_1_vertex, W_2_vertex, W_3_vertex, Mach, alpha, 0, 0, rho_inf, U_ref, output_file);
 
     return 0;
 

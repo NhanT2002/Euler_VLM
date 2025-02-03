@@ -45,7 +45,9 @@ public:
 
     void Res() const;
 
-    std::tuple<std::vector<double>, std::vector<double>, std::vector<double>, std::vector<double>, std::vector<double>, std::vector<double>> compute_abc() const;
+    std::tuple<Eigen::VectorXd, Eigen::VectorXd, Eigen::VectorXd, Eigen::VectorXd, Eigen::VectorXd, Eigen::VectorXd> compute_abc();
+
+    std::tuple<Eigen::ArrayXXd, Eigen::ArrayXXd, Eigen::ArrayXXd, Eigen::ArrayXXd> R_star(const Eigen::ArrayXXd& dW_0, const Eigen::ArrayXXd& dW_1, const Eigen::ArrayXXd& dW_2, const Eigen::ArrayXXd& dW_3);
 
     std::tuple<double, double> compute_eps(const std::vector<double>& W_IJ,
                   const double& OMEGA,
@@ -76,11 +78,6 @@ public:
 
     void run();
 };
-
-std::vector<std::vector<double>> thomasAlgorithm(std::vector<double>& a, // subdiagonal
-                                                 const std::vector<double>& b, // main diagonal
-                                                 std::vector<double>& c, // superdiagonal
-                                                 const std::vector<std::vector<double>>& d);  // right hand side
 
 std::vector<std::vector<double>> reshapeColumnWise(const std::vector<std::vector<double>>& input, int ny, int nx);
 

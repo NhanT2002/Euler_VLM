@@ -27,8 +27,8 @@ void write_plot3d_2d(const Eigen::ArrayXXd& W_0,
 
 
 // Function to write PLOT3D mesh to a file
-void write_PLOT3D_mesh(const std::vector<std::vector<double>>& x,
-                       const std::vector<std::vector<double>>& y,
+void write_PLOT3D_mesh(const Eigen::ArrayXXd& x,
+                       const Eigen::ArrayXXd& y,
                        const std::string& mesh_filename);
 
 

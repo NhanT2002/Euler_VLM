@@ -112,22 +112,38 @@ SpatialDiscretization::SpatialDiscretization(const Eigen::ArrayXXd& x,
     Lambda_I.resize(ncells_y, ncells_x);
     Lambda_J.resize(ncells_y, ncells_x);
 
-    restriction_operator_0.resize(ncells_y, ncells_x);
-    restriction_operator_1.resize(ncells_y, ncells_x);
-    restriction_operator_2.resize(ncells_y, ncells_x);
-    restriction_operator_3.resize(ncells_y, ncells_x);
-    forcing_function_0.resize(ncells_y, ncells_x);
-    forcing_function_1.resize(ncells_y, ncells_x);
-    forcing_function_2.resize(ncells_y, ncells_x);
-    forcing_function_3.resize(ncells_y, ncells_x);
+    restriction_operator_0.resize(ncells_domain_y, ncells_domain_x);
+    restriction_operator_0.setZero();
+    restriction_operator_1.resize(ncells_domain_y, ncells_domain_x);
+    restriction_operator_1.setZero();
+    restriction_operator_2.resize(ncells_domain_y, ncells_domain_x);
+    restriction_operator_2.setZero();
+    restriction_operator_3.resize(ncells_domain_y, ncells_domain_x);
+    restriction_operator_3.setZero();
+    forcing_function_0.resize(ncells_domain_y, ncells_domain_x);
+    forcing_function_0.setZero();
+    forcing_function_1.resize(ncells_domain_y, ncells_domain_x);
+    forcing_function_1.setZero();
+    forcing_function_2.resize(ncells_domain_y, ncells_domain_x);
+    forcing_function_2.setZero();
+    forcing_function_3.resize(ncells_domain_y, ncells_domain_x);
+    forcing_function_3.setZero();
     prolongation_operator_0.resize(ncells_y, ncells_x);
+    prolongation_operator_0.setZero();
     prolongation_operator_1.resize(ncells_y, ncells_x);
+    prolongation_operator_1.setZero();
     prolongation_operator_2.resize(ncells_y, ncells_x);
+    prolongation_operator_2.setZero();
     prolongation_operator_3.resize(ncells_y, ncells_x);
+    prolongation_operator_3.setZero();
     deltaW2h_0.resize(ncells_y, ncells_x);
+    deltaW2h_0.setZero();
     deltaW2h_1.resize(ncells_y, ncells_x);
+    deltaW2h_1.setZero();
     deltaW2h_2.resize(ncells_y, ncells_x);
+    deltaW2h_2.setZero();
     deltaW2h_3.resize(ncells_y, ncells_x);
+    deltaW2h_3.setZero();
 
     for (int j=2; j<ncells_y-2; j++) {
         for (int i=2; i<ncells_x-2; i++) {
