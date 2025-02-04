@@ -144,6 +144,14 @@ SpatialDiscretization::SpatialDiscretization(const Eigen::ArrayXXd& x,
     deltaW2h_2.setZero();
     deltaW2h_3.resize(ncells_y, ncells_x);
     deltaW2h_3.setZero();
+    W2h_0.resize(ncells_y, ncells_x);
+    W2h_0.setZero();
+    W2h_1.resize(ncells_y, ncells_x);
+    W2h_1.setZero();
+    W2h_2.resize(ncells_y, ncells_x);
+    W2h_2.setZero();
+    W2h_3.resize(ncells_y, ncells_x);
+    W2h_3.setZero();
 
     for (int j=2; j<ncells_y-2; j++) {
         for (int i=2; i<ncells_x-2; i++) {
@@ -614,7 +622,7 @@ void SpatialDiscretization::run_odd() {
     SpatialDiscretization::compute_dummy_cells();
     SpatialDiscretization::update_halo();
     SpatialDiscretization::update_W();
-    SpatialDiscretization::compute_lambda();
+    // SpatialDiscretization::compute_lambda();
     SpatialDiscretization::compute_flux();
     SpatialDiscretization::compute_Rc();
 }

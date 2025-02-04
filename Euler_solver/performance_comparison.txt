@@ -1,0 +1,11 @@
+Multigrid
+Iteration: 9040 : L2_norms: 3.36063e-12 2.86603e-12 1.52852e-12 1.01667e-11 C_l: 0.554508 C_d: 0.0408277 C_m: -0.074206
+Iteration: 9041 : L2_norms: 3.30451e-12 2.71457e-12 1.49462e-12 9.96786e-12 C_l: 0.554508 C_d: 0.0408277 C_m: -0.074206
+
+Solver duration: 381.124 seconds (6.3520 min)
+
+Runge-kutta (no residual smoothing)
+Iteration: 39318 : L2_norms: 3.13937e-12 2.12944e-12 2.31992e-12 1.00499e-11 C_l: 0.554508 C_d: 0.0408277 C_m: -0.074206
+Iteration: 39319 : L2_norms: 3.1254e-12 2.10935e-12 2.34515e-12 9.98841e-12 C_l: 0.554508 C_d: 0.0408277 C_m: -0.074206
+
+Solver duration: 1627.5 seconds (27.125 min)

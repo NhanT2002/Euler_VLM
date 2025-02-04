@@ -87,6 +87,7 @@ SpatialDiscretization Multigrid::mesh_restriction(SpatialDiscretization& h_state
 }
 
 void Multigrid::restriction(SpatialDiscretization& h_state, SpatialDiscretization& h2_state) {
+    
     int ny_2h = (h_state.nvertex_y+1)/2;
     int nx_2h = (h_state.nvertex_x+1)/2;
 
@@ -96,26 +97,27 @@ void Multigrid::restriction(SpatialDiscretization& h_state, SpatialDiscretizatio
     auto seqxp1 = Eigen::seq(3, h_state.ncells_x-3, 2);
 
     Eigen::ArrayXXd h2_OMEGA = (h_state.OMEGA(seqy, seqx) + h_state.OMEGA(seqy, seqxp1) + h_state.OMEGA(seqyp1, seqx) + h_state.OMEGA(seqyp1, seqxp1));
-    h2_state.rho_cells(Eigen::seq(2, h2_state.ncells_y-3), Eigen::seq(2, h2_state.ncells_x-3)) = (h_state.rho_cells(seqy, seqx)*h_state.OMEGA(seqy, seqx) + 
-                                                                        h_state.rho_cells(seqy, seqxp1)*h_state.OMEGA(seqy, seqxp1) + 
-                                                                        h_state.rho_cells(seqyp1, seqx)*h_state.OMEGA(seqyp1, seqx) + 
-                                                                        h_state.rho_cells(seqyp1, seqxp1)*h_state.OMEGA(seqyp1, seqxp1))/h2_OMEGA;
-    h2_state.u_cells(Eigen::seq(2, h2_state.ncells_y-3), Eigen::seq(2, h2_state.ncells_x-3)) = (h_state.u_cells(seqy, seqx)*h_state.OMEGA(seqy, seqx) + 
-                                                                        h_state.u_cells(seqy, seqxp1)*h_state.OMEGA(seqy, seqxp1) + 
-                                                                        h_state.u_cells(seqyp1, seqx)*h_state.OMEGA(seqyp1, seqx) + 
-                                                                        h_state.u_cells(seqyp1, seqxp1)*h_state.OMEGA(seqyp1, seqxp1))/h2_OMEGA;
-    h2_state.v_cells(Eigen::seq(2, h2_state.ncells_y-3), Eigen::seq(2, h2_state.ncells_x-3)) = (h_state.v_cells(seqy, seqx)*h_state.OMEGA(seqy, seqx) + 
-                                                                        h_state.v_cells(seqy, seqxp1)*h_state.OMEGA(seqy, seqxp1) + 
-                                                                        h_state.v_cells(seqyp1, seqx)*h_state.OMEGA(seqyp1, seqx) + 
-                                                                        h_state.v_cells(seqyp1, seqxp1)*h_state.OMEGA(seqyp1, seqxp1))/h2_OMEGA;
-    h2_state.E_cells(Eigen::seq(2, h2_state.ncells_y-3), Eigen::seq(2, h2_state.ncells_x-3)) = (h_state.E_cells(seqy, seqx)*h_state.OMEGA(seqy, seqx) + 
-                                                                        h_state.E_cells(seqy, seqxp1)*h_state.OMEGA(seqy, seqxp1) + 
-                                                                        h_state.E_cells(seqyp1, seqx)*h_state.OMEGA(seqyp1, seqx) + 
-                                                                        h_state.E_cells(seqyp1, seqxp1)*h_state.OMEGA(seqyp1, seqxp1))/h2_OMEGA;
-    h2_state.p_cells(Eigen::seq(2, h2_state.ncells_y-3), Eigen::seq(2, h2_state.ncells_x-3)) = (h_state.p_cells(seqy, seqx)*h_state.OMEGA(seqy, seqx) + 
-                                                                        h_state.p_cells(seqy, seqxp1)*h_state.OMEGA(seqy, seqxp1) + 
-                                                                        h_state.p_cells(seqyp1, seqx)*h_state.OMEGA(seqyp1, seqx) + 
-                                                                        h_state.p_cells(seqyp1, seqxp1)*h_state.OMEGA(seqyp1, seqxp1))/h2_OMEGA;
+    h2_state.W_0(Eigen::seq(2, h2_state.ncells_y-3), Eigen::seq(2, h2_state.ncells_x-3)) = (h_state.W_0(seqy, seqx)*h_state.OMEGA(seqy, seqx) + 
+                                                                                            h_state.W_0(seqy, seqxp1)*h_state.OMEGA(seqy, seqxp1) + 
+                                                                                            h_state.W_0(seqyp1, seqx)*h_state.OMEGA(seqyp1, seqx) + 
+                                                                                            h_state.W_0(seqyp1, seqxp1)*h_state.OMEGA(seqyp1, seqxp1))/h2_OMEGA;
+    h2_state.W_1(Eigen::seq(2, h2_state.ncells_y-3), Eigen::seq(2, h2_state.ncells_x-3)) = (h_state.W_1(seqy, seqx)*h_state.OMEGA(seqy, seqx) + 
+                                                                                            h_state.W_1(seqy, seqxp1)*h_state.OMEGA(seqy, seqxp1) + 
+                                                                                            h_state.W_1(seqyp1, seqx)*h_state.OMEGA(seqyp1, seqx) + 
+                                                                                            h_state.W_1(seqyp1, seqxp1)*h_state.OMEGA(seqyp1, seqxp1))/h2_OMEGA;
+    h2_state.W_2(Eigen::seq(2, h2_state.ncells_y-3), Eigen::seq(2, h2_state.ncells_x-3)) = (h_state.W_2(seqy, seqx)*h_state.OMEGA(seqy, seqx) + 
+                                                                                            h_state.W_2(seqy, seqxp1)*h_state.OMEGA(seqy, seqxp1) + 
+                                                                                            h_state.W_2(seqyp1, seqx)*h_state.OMEGA(seqyp1, seqx) + 
+                                                                                            h_state.W_2(seqyp1, seqxp1)*h_state.OMEGA(seqyp1, seqxp1))/h2_OMEGA;
+    h2_state.W_3(Eigen::seq(2, h2_state.ncells_y-3), Eigen::seq(2, h2_state.ncells_x-3)) = (h_state.W_3(seqy, seqx)*h_state.OMEGA(seqy, seqx) + 
+                                                                                            h_state.W_3(seqy, seqxp1)*h_state.OMEGA(seqy, seqxp1) + 
+                                                                                            h_state.W_3(seqyp1, seqx)*h_state.OMEGA(seqyp1, seqx) + 
+                                                                                            h_state.W_3(seqyp1, seqxp1)*h_state.OMEGA(seqyp1, seqxp1))/h2_OMEGA;
+
+    h2_state.update_conservative_variables();
+    h2_state.run_even();
+    h2_state.update_Rd0();
+
 
     // std::cout << "h2 rho_cells\n" << h2_state.rho_cells << std::endl;
     // std::cout << "h rho_cells\n" << h_state.rho_cells << std::endl;
@@ -158,12 +160,12 @@ void Multigrid::restriction(SpatialDiscretization& h_state, SpatialDiscretizatio
     h2_state.forcing_function_2 = h2_state.restriction_operator_2 - (h2_state.Rc_2 - h2_state.Rd0_2);
     h2_state.forcing_function_3 = h2_state.restriction_operator_3 - (h2_state.Rc_3 - h2_state.Rd0_3);
 
-
-    // std::cout << "h res\n" << h_state.Rc_1 - h_state.Rd0_1 + h_state.forcing_function_1  << std::endl;
-    // std::cout << "h2 restriction_operator_0\n" << h2_state.restriction_operator_1 << std::endl;
-    // std::cout << "h restriction_operator_0\n" << h_state.restriction_operator_1 << std::endl;
     
-    
+    // Store initial interpolated solution
+    h2_state.W2h_0 = h2_state.W_0;
+    h2_state.W2h_1 = h2_state.W_1;
+    h2_state.W2h_2 = h2_state.W_2;
+    h2_state.W2h_3 = h2_state.W_3;
 }
 
 Eigen::ArrayXXd Multigrid::compute_dt(SpatialDiscretization& h_state) {
@@ -217,8 +219,8 @@ std::tuple<Eigen::VectorXd, Eigen::VectorXd, Eigen::VectorXd, Eigen::VectorXd, E
 
     double rr = 2.0;
     Eigen::ArrayXXd r = current_state.Lambda_J(seqy, seqx)/current_state.Lambda_I(seqy, seqx);
-    Eigen::ArrayXXd eps_I = (0.25*((rr*(1+r.sqrt())/(1+r)).square()-1)).max(0.0);
-    Eigen::ArrayXXd eps_J = (0.25*((rr*(1+(1/r).sqrt())/(1+1/r)).square()-1)).max(0.0); 
+    Eigen::ArrayXXd eps_I = (0.25*((rr/(1+0.125*r)).square()-1)).max(0.0);
+    Eigen::ArrayXXd eps_J = (0.25*((rr/(1+0.125/r)).square()-1)).max(0.0); 
 
     Eigen::ArrayXXd a_I = -eps_I;
     a_I.col(0) = 0.0;
@@ -275,11 +277,8 @@ std::tuple<Eigen::ArrayXXd, Eigen::ArrayXXd, Eigen::ArrayXXd, Eigen::ArrayXXd, s
     double a5 = 1.0; double b5 = 0.44;                                                                                                                    
     multigrid_convergence = false;
 
-    // Store initial interpolated solution
-    Eigen::ArrayXXd W2h_0 = h_state.W_0;
-    Eigen::ArrayXXd W2h_1 = h_state.W_1;
-    Eigen::ArrayXXd W2h_2 = h_state.W_2;
-    Eigen::ArrayXXd W2h_3 = h_state.W_3;
+    // h_state.run_even();
+    // h_state.update_Rd0();
 
     Eigen::ArrayXXd dt;
     Eigen::ArrayXXd dW_0, dW_1, dW_2, dW_3;
@@ -311,6 +310,7 @@ std::tuple<Eigen::ArrayXXd, Eigen::ArrayXXd, Eigen::ArrayXXd, Eigen::ArrayXXd, s
             Eigen::ArrayXXd& Rd2_0 = h_state.Rd_2;
             Eigen::ArrayXXd& Rd3_0 = h_state.Rd_3;
 
+            // std::cout << "first stage : h_state.Rc_0 - Rd0_0 + h_state.forcing_function_0\n" << h_state.Rc_0 - Rd0_0 + h_state.forcing_function_0 << std::endl;
             dW_0 = -a1*dt/h_state.OMEGA(seqy, seqx)*(h_state.Rc_0 - Rd0_0 + h_state.forcing_function_0);
             h_state.W_0(seqy, seqx) = W0_0 + dW_0;
 
@@ -447,54 +447,153 @@ std::tuple<Eigen::ArrayXXd, Eigen::ArrayXXd, Eigen::ArrayXXd, Eigen::ArrayXXd, s
         }
     }
 
-    // Coarse grid correction
-    Eigen::ArrayXXd deltaW2h_0 = h_state.W_0 - W2h_0;
-    Eigen::ArrayXXd deltaW2h_1 = h_state.W_1 - W2h_1;
-    Eigen::ArrayXXd deltaW2h_2 = h_state.W_2 - W2h_2;
-    Eigen::ArrayXXd deltaW2h_3 = h_state.W_3 - W2h_3;
-
-    auto [deltaW2h_star_star_0, deltaW2h_star_star_1, deltaW2h_star_star_2, deltaW2h_star_star_3] = R_star(h_state, deltaW2h_0(seqy, seqx), deltaW2h_1(seqy, seqx), deltaW2h_2(seqy, seqx), deltaW2h_3(seqy, seqx));
-
-    deltaW2h_0(seqy, seqx) = deltaW2h_star_star_0;
-    deltaW2h_0.row(0) = deltaW2h_0.row(2);
-    deltaW2h_0.row(1) = deltaW2h_0.row(2);
-    deltaW2h_0.row(h_state.ncells_y-1) = deltaW2h_0.row(h_state.ncells_y-3);
-    deltaW2h_0.row(h_state.ncells_y-2) = deltaW2h_0.row(h_state.ncells_y-3);
-    multigrid_halo(deltaW2h_0);
-
-    deltaW2h_1(seqy, seqx) = deltaW2h_star_star_1;
-    deltaW2h_1.row(0) = deltaW2h_1.row(2);
-    deltaW2h_1.row(1) = deltaW2h_1.row(2);
-    deltaW2h_1.row(h_state.ncells_y-1) = deltaW2h_1.row(h_state.ncells_y-3);
-    deltaW2h_1.row(h_state.ncells_y-2) = deltaW2h_1.row(h_state.ncells_y-3);
-    multigrid_halo(deltaW2h_1);
-
-    deltaW2h_2(seqy, seqx) = deltaW2h_star_star_2;
-    deltaW2h_2.row(0) = deltaW2h_2.row(2);
-    deltaW2h_2.row(1) = deltaW2h_2.row(2);
-    deltaW2h_2.row(h_state.ncells_y-1) = deltaW2h_2.row(h_state.ncells_y-3);
-    deltaW2h_2.row(h_state.ncells_y-2) = deltaW2h_2.row(h_state.ncells_y-3);
-    multigrid_halo(deltaW2h_2);
-
-    deltaW2h_3(seqy, seqx) = deltaW2h_star_star_3;
-    deltaW2h_3.row(0) = deltaW2h_3.row(2);
-    deltaW2h_3.row(1) = deltaW2h_3.row(2);
-    deltaW2h_3.row(h_state.ncells_y-1) = deltaW2h_3.row(h_state.ncells_y-3);
-    deltaW2h_3.row(h_state.ncells_y-2) = deltaW2h_3.row(h_state.ncells_y-3);
-    multigrid_halo(deltaW2h_3);
-
-
-    h_state.deltaW2h_0 = deltaW2h_0;
-    h_state.deltaW2h_1 = deltaW2h_1;
-    h_state.deltaW2h_2 = deltaW2h_2;
-    h_state.deltaW2h_3 = deltaW2h_3;
-
     return {h_state.W_0, h_state.W_1, h_state.W_2, h_state.W_3, Residuals};                                                              
 }
 
 void Multigrid::prolongation(SpatialDiscretization& h2_state, SpatialDiscretization& h_state) {
-    int nx = h_state.nvertex_x;
-    int ny = h_state.nvertex_y;
+
+    h2_state.deltaW2h_0 = h2_state.W_0 - h2_state.W2h_0;
+    h2_state.deltaW2h_1 = h2_state.W_1 - h2_state.W2h_1;
+    h2_state.deltaW2h_2 = h2_state.W_2 - h2_state.W2h_2;
+    h2_state.deltaW2h_3 = h2_state.W_3 - h2_state.W2h_3;
+
+
+    auto seqy = Eigen::seq(2, h_state.ncells_y-4, 2);
+    auto seqyp1 = Eigen::seq(3, h_state.ncells_y-3, 2);
+    auto seqx = Eigen::seq(2, h_state.ncells_x-4, 2);
+    auto seqxp1 = Eigen::seq(3, h_state.ncells_x-3, 2);
+
+    auto h2_seqym1 = Eigen::seq(1, h2_state.ncells_y-4);
+    auto h2_seqxm1 = Eigen::seq(1, h2_state.ncells_x-4);
+    auto h2_seqy = Eigen::seq(2, h2_state.ncells_y-3);
+    auto h2_seqx = Eigen::seq(2, h2_state.ncells_x-3);
+    auto h2_seqyp1 = Eigen::seq(3, h2_state.ncells_y-2);
+    auto h2_seqxp1 = Eigen::seq(3, h2_state.ncells_x-2);
+
+    h_state.prolongation_operator_0(seqy, seqx) = 0.0625*(9*h2_state.deltaW2h_0(h2_seqy, h2_seqx) + 
+                                                          3*h2_state.deltaW2h_0(h2_seqy, h2_seqxm1) + 
+                                                          3*h2_state.deltaW2h_0(h2_seqym1, h2_seqx) + 
+                                                          h2_state.deltaW2h_0(h2_seqym1, h2_seqxm1));
+    h_state.prolongation_operator_0(seqy, seqxp1) = 0.0625*(9*h2_state.deltaW2h_0(h2_seqy, h2_seqx) + 
+                                                          3*h2_state.deltaW2h_0(h2_seqy, h2_seqxp1) + 
+                                                          3*h2_state.deltaW2h_0(h2_seqym1, h2_seqx) + 
+                                                          h2_state.deltaW2h_0(h2_seqym1, h2_seqxp1));
+    h_state.prolongation_operator_0(seqyp1, seqx) = 0.0625*(9*h2_state.deltaW2h_0(h2_seqy, h2_seqx) + 
+                                                          3*h2_state.deltaW2h_0(h2_seqy, h2_seqxm1) + 
+                                                          3*h2_state.deltaW2h_0(h2_seqyp1, h2_seqx) + 
+                                                          h2_state.deltaW2h_0(h2_seqyp1, h2_seqxm1));
+    h_state.prolongation_operator_0(seqyp1, seqxp1) = 0.0625*(9*h2_state.deltaW2h_0(h2_seqy, h2_seqx) + 
+                                                          3*h2_state.deltaW2h_0(h2_seqy, h2_seqxp1) + 
+                                                          3*h2_state.deltaW2h_0(h2_seqyp1, h2_seqx) + 
+                                                          h2_state.deltaW2h_0(h2_seqyp1, h2_seqxp1));
+
+    h_state.prolongation_operator_1(seqy, seqx) = 0.0625*(9*h2_state.deltaW2h_1(h2_seqy, h2_seqx) + 
+                                                          3*h2_state.deltaW2h_1(h2_seqy, h2_seqxm1) + 
+                                                          3*h2_state.deltaW2h_1(h2_seqym1, h2_seqx) + 
+                                                          h2_state.deltaW2h_1(h2_seqym1, h2_seqxm1));
+    h_state.prolongation_operator_1(seqy, seqxp1) = 0.0625*(9*h2_state.deltaW2h_1(h2_seqy, h2_seqx) + 
+                                                          3*h2_state.deltaW2h_1(h2_seqy, h2_seqxp1) + 
+                                                          3*h2_state.deltaW2h_1(h2_seqym1, h2_seqx) + 
+                                                          h2_state.deltaW2h_1(h2_seqym1, h2_seqxp1));
+    h_state.prolongation_operator_1(seqyp1, seqx) = 0.0625*(9*h2_state.deltaW2h_1(h2_seqy, h2_seqx) + 
+                                                          3*h2_state.deltaW2h_1(h2_seqy, h2_seqxm1) + 
+                                                          3*h2_state.deltaW2h_1(h2_seqyp1, h2_seqx) + 
+                                                          h2_state.deltaW2h_1(h2_seqyp1, h2_seqxm1));
+    h_state.prolongation_operator_1(seqyp1, seqxp1) = 0.0625*(9*h2_state.deltaW2h_1(h2_seqy, h2_seqx) + 
+                                                          3*h2_state.deltaW2h_1(h2_seqy, h2_seqxp1) + 
+                                                          3*h2_state.deltaW2h_1(h2_seqyp1, h2_seqx) + 
+                                                          h2_state.deltaW2h_1(h2_seqyp1, h2_seqxp1));
+
+    h_state.prolongation_operator_2(seqy, seqx) = 0.0625*(9*h2_state.deltaW2h_2(h2_seqy, h2_seqx) + 
+                                                          3*h2_state.deltaW2h_2(h2_seqy, h2_seqxm1) + 
+                                                          3*h2_state.deltaW2h_2(h2_seqym1, h2_seqx) + 
+                                                          h2_state.deltaW2h_2(h2_seqym1, h2_seqxm1));
+    h_state.prolongation_operator_2(seqy, seqxp1) = 0.0625*(9*h2_state.deltaW2h_2(h2_seqy, h2_seqx) + 
+                                                          3*h2_state.deltaW2h_2(h2_seqy, h2_seqxp1) + 
+                                                          3*h2_state.deltaW2h_2(h2_seqym1, h2_seqx) + 
+                                                          h2_state.deltaW2h_2(h2_seqym1, h2_seqxp1));
+    h_state.prolongation_operator_2(seqyp1, seqx) = 0.0625*(9*h2_state.deltaW2h_2(h2_seqy, h2_seqx) + 
+                                                          3*h2_state.deltaW2h_2(h2_seqy, h2_seqxm1) + 
+                                                          3*h2_state.deltaW2h_2(h2_seqyp1, h2_seqx) + 
+                                                          h2_state.deltaW2h_2(h2_seqyp1, h2_seqxm1));
+    h_state.prolongation_operator_2(seqyp1, seqxp1) = 0.0625*(9*h2_state.deltaW2h_2(h2_seqy, h2_seqx) + 
+                                                          3*h2_state.deltaW2h_2(h2_seqy, h2_seqxp1) + 
+                                                          3*h2_state.deltaW2h_2(h2_seqyp1, h2_seqx) + 
+                                                          h2_state.deltaW2h_2(h2_seqyp1, h2_seqxp1));
+
+    h_state.prolongation_operator_3(seqy, seqx) = 0.0625*(9*h2_state.deltaW2h_3(h2_seqy, h2_seqx) + 
+                                                          3*h2_state.deltaW2h_3(h2_seqy, h2_seqxm1) + 
+                                                          3*h2_state.deltaW2h_3(h2_seqym1, h2_seqx) + 
+                                                          h2_state.deltaW2h_3(h2_seqym1, h2_seqxm1));
+    h_state.prolongation_operator_3(seqy, seqxp1) = 0.0625*(9*h2_state.deltaW2h_3(h2_seqy, h2_seqx) + 
+                                                          3*h2_state.deltaW2h_3(h2_seqy, h2_seqxp1) + 
+                                                          3*h2_state.deltaW2h_3(h2_seqym1, h2_seqx) + 
+                                                          h2_state.deltaW2h_3(h2_seqym1, h2_seqxp1));
+    h_state.prolongation_operator_3(seqyp1, seqx) = 0.0625*(9*h2_state.deltaW2h_3(h2_seqy, h2_seqx) + 
+                                                          3*h2_state.deltaW2h_3(h2_seqy, h2_seqxm1) + 
+                                                          3*h2_state.deltaW2h_3(h2_seqyp1, h2_seqx) + 
+                                                          h2_state.deltaW2h_3(h2_seqyp1, h2_seqxm1));
+    h_state.prolongation_operator_3(seqyp1, seqxp1) = 0.0625*(9*h2_state.deltaW2h_3(h2_seqy, h2_seqx) + 
+                                                          3*h2_state.deltaW2h_3(h2_seqy, h2_seqxp1) + 
+                                                          3*h2_state.deltaW2h_3(h2_seqyp1, h2_seqx) + 
+                                                          h2_state.deltaW2h_3(h2_seqyp1, h2_seqxp1));
+
+    // std::cout << "h2 deltaW2h_0\n" << h2_state.deltaW2h_0 << std::endl;
+    // std::cout << "h prolongation_operator_0\n" << h_state.prolongation_operator_0 << std::endl;
+
+
+    // Compute W_h_+
+    h_state.W_0 += h_state.prolongation_operator_0;
+    h_state.W_1 += h_state.prolongation_operator_1;
+    h_state.W_2 += h_state.prolongation_operator_2;
+    h_state.W_3 += h_state.prolongation_operator_3;
+}
+
+void Multigrid::prolongation_to_finest_grid(SpatialDiscretization& h2_state, SpatialDiscretization& h_state) {
+    auto seqy_2h = Eigen::seq(2, h2_state.ncells_y-3);
+    auto seqx_2h = Eigen::seq(2, h2_state.ncells_x-3);
+    // Coarse grid correction
+    Eigen::ArrayXXd deltaW2h_0 = h2_state.W_0 - h2_state.W2h_0;
+    Eigen::ArrayXXd deltaW2h_1 = h2_state.W_1 - h2_state.W2h_1;
+    Eigen::ArrayXXd deltaW2h_2 = h2_state.W_2 - h2_state.W2h_2;
+    Eigen::ArrayXXd deltaW2h_3 = h2_state.W_3 - h2_state.W2h_3;
+
+    auto [deltaW2h_star_star_0, deltaW2h_star_star_1, deltaW2h_star_star_2, deltaW2h_star_star_3] = R_star(h2_state, deltaW2h_0(seqy_2h, seqx_2h), deltaW2h_1(seqy_2h, seqx_2h), deltaW2h_2(seqy_2h, seqx_2h), deltaW2h_3(seqy_2h, seqx_2h));
+
+    deltaW2h_0(seqy_2h, seqx_2h) = deltaW2h_star_star_0;
+    deltaW2h_0.row(0) = deltaW2h_0.row(2);
+    deltaW2h_0.row(1) = deltaW2h_0.row(2);
+    deltaW2h_0.row(h2_state.ncells_y-1) = deltaW2h_0.row(h2_state.ncells_y-3);
+    deltaW2h_0.row(h2_state.ncells_y-2) = deltaW2h_0.row(h2_state.ncells_y-3);
+    multigrid_halo(deltaW2h_0);
+
+    deltaW2h_1(seqy_2h, seqx_2h) = deltaW2h_star_star_1;
+    deltaW2h_1.row(0) = deltaW2h_1.row(2);
+    deltaW2h_1.row(1) = deltaW2h_1.row(2);
+    deltaW2h_1.row(h2_state.ncells_y-1) = deltaW2h_1.row(h2_state.ncells_y-3);
+    deltaW2h_1.row(h2_state.ncells_y-2) = deltaW2h_1.row(h2_state.ncells_y-3);
+    multigrid_halo(deltaW2h_1);
+
+    deltaW2h_2(seqy_2h, seqx_2h) = deltaW2h_star_star_2;
+    deltaW2h_2.row(0) = deltaW2h_2.row(2);
+    deltaW2h_2.row(1) = deltaW2h_2.row(2);
+    deltaW2h_2.row(h2_state.ncells_y-1) = deltaW2h_2.row(h2_state.ncells_y-3);
+    deltaW2h_2.row(h2_state.ncells_y-2) = deltaW2h_2.row(h2_state.ncells_y-3);
+    multigrid_halo(deltaW2h_2);
+
+    deltaW2h_3(seqy_2h, seqx_2h) = deltaW2h_star_star_3;
+    deltaW2h_3.row(0) = deltaW2h_3.row(2);
+    deltaW2h_3.row(1) = deltaW2h_3.row(2);
+    deltaW2h_3.row(h2_state.ncells_y-1) = deltaW2h_3.row(h2_state.ncells_y-3);
+    deltaW2h_3.row(h2_state.ncells_y-2) = deltaW2h_3.row(h2_state.ncells_y-3);
+    multigrid_halo(deltaW2h_3);
+
+
+    h2_state.deltaW2h_0 = deltaW2h_0;
+    h2_state.deltaW2h_1 = deltaW2h_1;
+    h2_state.deltaW2h_2 = deltaW2h_2;
+    h2_state.deltaW2h_3 = deltaW2h_3;
+
 
     auto seqy = Eigen::seq(2, h_state.ncells_y-4, 2);
     auto seqyp1 = Eigen::seq(3, h_state.ncells_y-3, 2);

@@ -144,54 +144,53 @@ int main(int argc, char* argv[]) {
         SpatialDiscretization h8_state = multigrid_solver.mesh_restriction(h4_state);
         multigrid_solver.restriction(h4_state, h8_state);
 
-        std::tie(W_0, W_1, W_2, W_3, Residuals) = multigrid_solver.restriction_timestep(h8_state, it_max);
+        std::tie(W_0, W_1, W_2, W_3, Residuals) = multigrid_solver.restriction_timestep(h8_state, 10);
         multigrid_solver.prolongation(h8_state, h4_state);
-        std::tie(W_0, W_1, W_2, W_3, Residuals) = multigrid_solver.restriction_timestep(h4_state, it_max);
+        std::tie(W_0, W_1, W_2, W_3, Residuals) = multigrid_solver.restriction_timestep(h4_state, 10);
         multigrid_solver.prolongation(h4_state, h2_state);
-        std::tie(W_0, W_1, W_2, W_3, Residuals) = multigrid_solver.restriction_timestep(h2_state, it_max/10);
+        std::tie(W_0, W_1, W_2, W_3, Residuals) = multigrid_solver.restriction_timestep(h2_state, 10);
         multigrid_solver.prolongation(h2_state, h_state); // Starting grid
-        multigrid_solver.restriction_timestep(h_state, 1);
 
         // W cycle
+        h_state.run_even();
+        h_state.update_Rd0();
         for (int it = 1; it < it_max; it++) {
-            
-            multigrid_solver.restriction(h_state, h2_state);
-            multigrid_solver.restriction_timestep(h2_state, 1, -1);
-            multigrid_solver.prolongation(h2_state, h_state);
-            h_state.run_even();
-
-            // multigrid_solver.restriction(h_state, h2_state);
-            // multigrid_solver.restriction_timestep(h2_state, 1, -1);
-            // multigrid_solver.restriction(h2_state, h4_state);
-            // multigrid_solver.restriction_timestep(h4_state, 1, -1);
-            // multigrid_solver.restriction(h4_state, h8_state);
-            // multigrid_solver.restriction_timestep(h8_state, 1, -1);
-
-            // multigrid_solver.prolongation(h8_state, h4_state);
-            // multigrid_solver.restriction_timestep(h4_state, 1, -1);
-            // multigrid_solver.restriction(h4_state, h8_state);
-            // multigrid_solver.restriction_timestep(h8_state, 1, -1);
-            // multigrid_solver.prolongation(h8_state, h4_state);
-            // multigrid_solver.prolongation(h4_state, h2_state);
-            // multigrid_solver.restriction_timestep(h2_state, 1, -1);
-
-            // multigrid_solver.restriction(h2_state, h4_state);
-            // multigrid_solver.restriction_timestep(h4_state, 1, -1);
-            // multigrid_solver.restriction(h4_state, h8_state);
-            // multigrid_solver.restriction_timestep(h8_state, 1, -1);
-            // multigrid_solver.prolongation(h8_state, h4_state);
-            // multigrid_solver.restriction_timestep(h4_state, 1, -1);
-            // multigrid_solver.restriction(h4_state, h8_state);
-            // multigrid_solver.restriction_timestep(h8_state, 1, -1);
-
-            // multigrid_solver.prolongation(h8_state, h4_state);
-            // multigrid_solver.prolongation(h4_state, h2_state);
-            // multigrid_solver.prolongation(h2_state, h_state);
-
             std::tie(W_0, W_1, W_2, W_3, Residuals) = multigrid_solver.restriction_timestep(h_state, 1, it);
             if (multigrid_solver.multigrid_convergence) {
                 break;
             }
+            
+            multigrid_solver.restriction(h_state, h2_state);
+            multigrid_solver.restriction_timestep(h2_state, 1, -1);
+            // multigrid_solver.restriction(h2_state, h4_state);
+            // multigrid_solver.restriction_timestep(h4_state, 1, -1);
+            // multigrid_solver.restriction(h4_state, h8_state);
+            // multigrid_solver.restriction_timestep(h8_state, 1, -1);
+
+            // multigrid_solver.prolongation(h8_state, h4_state);
+            // multigrid_solver.restriction_timestep(h4_state, 1, -1);
+            // multigrid_solver.restriction(h4_state, h8_state);
+            // multigrid_solver.restriction_timestep(h8_state, 1, -1);
+            // multigrid_solver.prolongation(h8_state, h4_state);
+            // multigrid_solver.prolongation(h4_state, h2_state);
+            // multigrid_solver.restriction_timestep(h2_state, 1, -1);
+            // multigrid_solver.restriction(h2_state, h4_state);
+            // multigrid_solver.restriction_timestep(h4_state, 1, -1);
+            // multigrid_solver.restriction(h4_state, h8_state);
+            // multigrid_solver.restriction_timestep(h8_state, 1, -1);
+            // multigrid_solver.prolongation(h8_state, h4_state);
+            // multigrid_solver.restriction_timestep(h4_state, 1, -1);
+            // multigrid_solver.restriction(h4_state, h8_state);
+            // multigrid_solver.restriction_timestep(h8_state, 1, -1);
+
+            // multigrid_solver.prolongation(h8_state, h4_state);
+            // multigrid_solver.prolongation(h4_state, h2_state);
+            multigrid_solver.prolongation_to_finest_grid(h2_state, h_state);
+            h_state.update_conservative_variables();
+            h_state.run_odd();
+            
+
+            
         }
     }
 

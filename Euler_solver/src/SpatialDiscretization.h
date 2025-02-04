@@ -94,6 +94,7 @@ public:
     Eigen::ArrayXXd deltaW2h_1;
     Eigen::ArrayXXd deltaW2h_2;
     Eigen::ArrayXXd deltaW2h_3;
+    Eigen::ArrayXXd W2h_0, W2h_1, W2h_2, W2h_3;
     
 
     Eigen::ArrayXXd x, y;
