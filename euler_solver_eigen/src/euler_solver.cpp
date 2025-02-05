@@ -799,6 +799,7 @@ public:
 
         double residual = 0.0;
 
+        // TODO: reduction clause should be required here
         #pragma omp parallel for collapse(2) schedule(dynamic, CHUNK_SIZE)
         for(int i = 2; i < ni_cells-2; i++ ) {
             for(int j = 2; j < nj_cells-2; j++) {
@@ -812,7 +813,7 @@ public:
         return residual;
     }
 
-    double compute_coeff() {
+    tuple<double, double> compute_coeff() {
 
         double Fx = 0.0;
         double Fy = 0.0;
@@ -829,8 +830,9 @@ public:
         }
 
         double lift = Fy*cos(alpha) - Fx*sin(alpha);
+        double drag = Fy*sin(alpha) + Fx*cos(alpha);
 
-        return lift/dyn_pressure;
+        return make_tuple(lift/dyn_pressure, drag/dyn_pressure);
     }
 
 };
@@ -844,6 +846,10 @@ int main(int argc, char* argv[]) {
     cout << "Available cores: " << omp_get_num_procs() << "\n";
 
     const int num_thread = 8;
+
+    int max_iter = 100000000;
+    double res_threshold = 1e-12;
+
     // omp_set_dynamic(0);
     omp_set_num_threads(num_thread);
 
@@ -854,9 +860,10 @@ int main(int argc, char* argv[]) {
     // string filename = "naca0012_9.xyz";
     // string filename = "naca0012_32.xyz";
     // string filename = "naca0012_64.xyz";
-    // string filename = "naca0012_256.xyz";
+    // string filename = "naca0012_128.xyz";
+    string filename = "naca0012_256.xyz";
     // string filename = "naca0012_512.xyz";
-    string filename = "naca0012_1024.xyz";
+    // string filename = "naca0012_1024.xyz";
 
     fvm.load_mesh(filename);
     fvm.compute_geometry();
@@ -887,8 +894,6 @@ int main(int argc, char* argv[]) {
     vector<double> betas = {1.0, 0.0, 0.56, 0.0, 0.44};
 
     double res0 = 1.0;
-
-    int max_iter = 500;
 
     for(int iter = 0; iter < max_iter; iter++) {
 
@@ -956,7 +961,16 @@ int main(int argc, char* argv[]) {
 
         cout << " - res: " << res;
 
-        cout << " - CL = " << fvm.compute_coeff();
+
+        auto [cl, cd] = fvm.compute_coeff();
+
+        cout << " - CL = " << cl << " CD = " << cd;
+
+        // Check for convergence
+        if (res < res_threshold) {
+            cout << "\nConverged at iteration " << iter << " with residual: " << res << endl;
+            break;  // Exit the loop early
+        }
 
         cout << "\n";
     }
