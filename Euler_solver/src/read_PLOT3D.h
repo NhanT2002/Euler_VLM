@@ -38,4 +38,8 @@ std::tuple<Eigen::ArrayXXd, Eigen::ArrayXXd, Eigen::ArrayXXd, Eigen::ArrayXXd> c
                                                                                                                     const Eigen::ArrayXXd& W_2_dummy,
                                                                                                                     const Eigen::ArrayXXd& W_3_dummy);
 
+void save_time_residuals(const std::vector<double>& iteration_times,
+                     const std::vector<std::vector<double>>& Residuals,
+                     const std::string& file_name = "checkpoint.txt");                                                                                                                    
+
 #endif //READ_PLOT3D_H

@@ -64,17 +64,17 @@ public:
 
     Eigen::Array<double, 4, 1> compute_L2_norm(const Eigen::ArrayXXd &dW_0, const Eigen::ArrayXXd &dW_1, const Eigen::ArrayXXd &dW_2, const Eigen::ArrayXXd &dW_3);
 
-    static void save_checkpoint(const std::vector<std::vector<std::vector<double>>>& q,
-                         const std::vector<int>& iteration,
-                         const std::vector<std::vector<double>>& Residuals,
-                         const std::string& file_name = "checkpoint.txt");
+    // static void save_checkpoint(const std::vector<std::vector<std::vector<double>>>& q,
+    //                      const std::vector<int>& iteration,
+    //                      const std::vector<std::vector<double>>& Residuals,
+    //                      const std::string& file_name = "checkpoint.txt");
 
-    static std::tuple<std::vector<std::vector<std::vector<double>>>,std::vector<int>,
-           std::vector<std::vector<double>>> load_checkpoint(const std::string& file_name);
+    // static std::tuple<std::vector<std::vector<std::vector<double>>>,std::vector<int>,
+    //        std::vector<std::vector<double>>> load_checkpoint(const std::string& file_name);
 
     std::tuple<double, double, double> compute_coeff();
 
-    std::tuple<Eigen::ArrayXXd, Eigen::ArrayXXd, Eigen::ArrayXXd, Eigen::ArrayXXd, std::vector<std::vector<double>>> RungeKutta(int it_max = 20000);
+    std::tuple<Eigen::ArrayXXd, Eigen::ArrayXXd, Eigen::ArrayXXd, Eigen::ArrayXXd, std::vector<std::vector<double>>, std::vector<double>> RungeKutta(int it_max = 20000);
 
     void run();
 };

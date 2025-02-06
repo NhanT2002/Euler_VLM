@@ -233,3 +233,27 @@ std::tuple<Eigen::ArrayXXd, Eigen::ArrayXXd, Eigen::ArrayXXd, Eigen::ArrayXXd> c
 
     return {W_0_vertex, W_1_vertex, W_2_vertex, W_3_vertex}; // Return the vertex-centered data
 }
+
+void save_time_residuals(const std::vector<double>& iteration_times,
+                        const std::vector<std::vector<double>>& Residuals,
+                        const std::string& file_name) {
+    // Open the file
+    std::ofstream file(file_name);
+    if (!file.is_open()) {
+        throw std::runtime_error("Could not open file: " + file_name);
+    }
+
+    // Write the residuals to the file
+    for (size_t i = 0; i < Residuals.size(); ++i) {
+        file << iteration_times[i] << ",";
+        for (size_t j = 0; j < Residuals[i].size(); ++j) {
+            file << Residuals[i][j] << ",";
+        }
+        file << "\n";
+    }
+
+    // Close the file
+    file.close();
+
+    std::cout << "Residuals saved to file: " << file_name << std::endl;
+}

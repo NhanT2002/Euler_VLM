@@ -11,6 +11,7 @@
 #include <cmath>
 #include <omp.h>
 #include <Eigen/Dense>
+#include <chrono>
 
 Eigen::VectorXd thomasAlgorithm(const Eigen::VectorXd& a, const Eigen::VectorXd& b, const Eigen::VectorXd& c, const Eigen::VectorXd& d) {
 
@@ -147,7 +148,9 @@ std::tuple<Eigen::ArrayXXd, Eigen::ArrayXXd, Eigen::ArrayXXd, Eigen::ArrayXXd> T
     return {R_star_star_0.reshaped(dW_0.rows(), dW_0.cols()).array(), R_star_star_1.reshaped(dW_0.rows(), dW_0.cols()).array(), R_star_star_2.reshaped(dW_0.rows(), dW_0.cols()).array(), R_star_star_3.reshaped(dW_0.rows(), dW_0.cols()).array()};
 }
 
-std::tuple<Eigen::ArrayXXd, Eigen::ArrayXXd, Eigen::ArrayXXd, Eigen::ArrayXXd, std::vector<std::vector<double>>> TemporalDiscretization::RungeKutta(int it_max) {
+std::tuple<Eigen::ArrayXXd, Eigen::ArrayXXd, Eigen::ArrayXXd, Eigen::ArrayXXd, std::vector<std::vector<double>>, std::vector<double>> TemporalDiscretization::RungeKutta(int it_max) {
+    auto start = std::chrono::high_resolution_clock::now();
+
     double convergence_tol = 1e-11;
     double a1 = 0.25; double b1 = 1.0;
     double a2 = 0.1667; double b2 = 0.0;
@@ -171,6 +174,9 @@ std::tuple<Eigen::ArrayXXd, Eigen::ArrayXXd, Eigen::ArrayXXd, Eigen::ArrayXXd, s
     
     Residuals = std::vector<std::vector<double>>{};
     iteration = std::vector<int>{};
+
+    std::vector<double> iteration_times;
+    iteration_times = std::vector<double>{};
 
     auto seqy = Eigen::seq(2, current_state.ncells_y-3);
     auto seqx = Eigen::seq(2, current_state.ncells_x-3);
@@ -302,6 +308,10 @@ std::tuple<Eigen::ArrayXXd, Eigen::ArrayXXd, Eigen::ArrayXXd, Eigen::ArrayXXd, s
             auto L2_norm = compute_L2_norm(dW_0, dW_1, dW_2, dW_3);
             iteration.push_back(it);
             Residuals.push_back({L2_norm(0), L2_norm(1), L2_norm(2), L2_norm(3)});
+
+            auto end_time = std::chrono::high_resolution_clock::now(); // End timer
+            std::chrono::duration<double> elapsed = end_time - start;
+            iteration_times.push_back(elapsed.count());
 
             std::cout << "Iteration: " << it << " : L2_norms: " << L2_norm(0) << " " << L2_norm(1) << " " << L2_norm(2) << " " << L2_norm(3) << " ";
 
@@ -445,6 +455,10 @@ std::tuple<Eigen::ArrayXXd, Eigen::ArrayXXd, Eigen::ArrayXXd, Eigen::ArrayXXd, s
             iteration.push_back(it);
             Residuals.push_back({L2_norm(0), L2_norm(1), L2_norm(2), L2_norm(3)});
 
+            auto end_time = std::chrono::high_resolution_clock::now(); // End timer
+            std::chrono::duration<double> elapsed = end_time - start;
+            iteration_times.push_back(elapsed.count());
+
             std::cout << "Iteration: " << it << " : L2_norms: " << L2_norm(0) << " " << L2_norm(1) << " " << L2_norm(2) << " " << L2_norm(3) << " ";
 
             auto [C_l, C_d, C_m] = compute_coeff();
@@ -459,7 +473,7 @@ std::tuple<Eigen::ArrayXXd, Eigen::ArrayXXd, Eigen::ArrayXXd, Eigen::ArrayXXd, s
     }
 
 
-    return {current_state.W_0, current_state.W_1, current_state.W_2, current_state.W_3, Residuals};
+    return {current_state.W_0, current_state.W_1, current_state.W_2, current_state.W_3, Residuals, iteration_times};
 }
 
 std::tuple<double, double, double> TemporalDiscretization::compute_coeff() {

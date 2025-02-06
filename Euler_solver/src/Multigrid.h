@@ -40,7 +40,7 @@ public:
     // Coarse to fine grid
     void prolongation(SpatialDiscretization& h2_state, SpatialDiscretization& h_state);
 
-    void prolongation_to_finest_grid(SpatialDiscretization& h2_state, SpatialDiscretization& h_state);
+    void prolongation_smooth(SpatialDiscretization& h2_state, SpatialDiscretization& h_state);
 };
 
 #endif // MULTIGRID_H
