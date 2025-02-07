@@ -357,9 +357,15 @@ void SpatialDiscretization::compute_dummy_cells() {
     Eigen::Array<double, 1, Eigen::Dynamic> V = nx_x(2, Eigen::all)*u_cells(2, Eigen::all) + nx_y(2, Eigen::all)*v_cells(2, Eigen::all);
     Eigen::Array<double, 1, Eigen::Dynamic> u_dummy = u_cells(2, Eigen::all) - 2*V*nx_x(2, Eigen::all);
     Eigen::Array<double, 1, Eigen::Dynamic> v_dummy = v_cells(2, Eigen::all) - 2*V*nx_y(2, Eigen::all);
-    Eigen::Array<double, 1, Eigen::Dynamic> E_dummy = E_cells(2, Eigen::all);
     Eigen::Array<double, 1, Eigen::Dynamic> rho_dummy = rho_cells(2, Eigen::all);
+    
+    Eigen::Array<double, 1, Eigen::Dynamic> E_dummy = E_cells(2, Eigen::all);
     Eigen::Array<double, 1, Eigen::Dynamic> p_dummy  = (1.4-1)*rho_dummy*(E_dummy - 0.5*(u_dummy*u_dummy + v_dummy*v_dummy));
+
+    // Eigen::Array<double, 1, Eigen::Dynamic> p_wall = 0.125*(15*p_cells(2, Eigen::all) - 10*p_cells(3, Eigen::all) + 3*p_cells(4, Eigen::all));
+    // Eigen::Array<double, 1, Eigen::Dynamic> p_dummy = 2*p_wall - p_cells(2, Eigen::all);
+    // Eigen::Array<double, 1, Eigen::Dynamic> E_dummy = p_dummy/(rho_dummy*(1.4-1)) + 0.5*(u_dummy*u_dummy + v_dummy*v_dummy);
+
     rho_cells.row(1) = rho_dummy;
     u_cells.row(1) = u_dummy;
     v_cells.row(1) = v_dummy;
