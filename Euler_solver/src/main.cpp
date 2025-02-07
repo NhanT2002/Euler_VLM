@@ -130,8 +130,12 @@ int main(int argc, char* argv[]) {
     double T = 1.0;
     double p = 1.0;
 
-    if (multigrid == 1) {
-        Eigen::ArrayXXd W_0, W_1, W_2, W_3;
+    Eigen::ArrayXXd W_0, W_1, W_2, W_3;
+    std::vector<std::vector<double>> iteration_residuals;
+    std::vector<double> iteration_times;
+    iteration_times = std::vector<double>{};
+    iteration_residuals = std::vector<std::vector<double>>{};
+    if (multigrid == 1) {        
         std::vector<std::vector<double>> Residuals;
 
         SpatialDiscretization h_state(x, y, rho, u, v, E, T, p, k2_coeff, k4_coeff, T_inf, U_ref);
@@ -152,19 +156,16 @@ int main(int argc, char* argv[]) {
         multigrid_solver.prolongation(h2_state, h_state); // Starting grid
         std::cout << "starting cycle\n";
 
-        // W cycle
-        std::vector<std::vector<double>> iteration_residuals;
-        std::vector<double> iteration_times;
-        iteration_times = std::vector<double>{};
-        iteration_residuals = std::vector<std::vector<double>>{};
+        // W cycle        
         h_state.run_even();
         h_state.update_Rd0();
         for (int it = 1; it < it_max; it++) {
             std::tie(W_0, W_1, W_2, W_3, Residuals) = multigrid_solver.restriction_timestep(h_state, 1, it);
-            iteration_residuals.push_back({Residuals[0][0], Residuals[0][1], Residuals[0][2], Residuals[0][3]});
-            auto end_time = std::chrono::high_resolution_clock::now(); // End timer
-            std::chrono::duration<double> elapsed = end_time - start;
-            iteration_times.push_back(elapsed.count());
+
+            // iteration_residuals.push_back({Residuals[0][0], Residuals[0][1], Residuals[0][2], Residuals[0][3]});
+            // auto end_time = std::chrono::high_resolution_clock::now(); // End timer
+            // std::chrono::duration<double> elapsed = end_time - start;
+            // iteration_times.push_back(elapsed.count());
 
             if (multigrid_solver.multigrid_convergence) {
                 break;
@@ -203,13 +204,13 @@ int main(int argc, char* argv[]) {
 
             
         }
-        save_time_residuals(iteration_times, iteration_residuals, checkpoint_file);
+        // save_time_residuals(iteration_times, iteration_residuals, checkpoint_file);
     }
 
     else {
         TemporalDiscretization FVM(x, y, rho, u, v, E, T, p, T_inf, U_ref, CFL_number, residual_smoothing, k2_coeff, k4_coeff);
-        auto [W_0, W_1, W_2, W_3, Residuals, iteration_times] = FVM.RungeKutta(it_max);
-        save_time_residuals(iteration_times, Residuals, checkpoint_file);
+        std::tie(W_0, W_1, W_2, W_3, iteration_residuals, iteration_times) = FVM.RungeKutta(it_max);
+        save_time_residuals(iteration_times, iteration_residuals, checkpoint_file);
     }
 
     
@@ -219,11 +220,11 @@ int main(int argc, char* argv[]) {
     std::chrono::duration<double> serialDuration = end - start;
     std::cout << "\nSolver duration: " << serialDuration.count() << " seconds\n";
 
-    // auto [W_0_vertex, W_1_vertex, W_2_vertex, W_3_vertex] = cell_dummy_to_vertex_centered_airfoil(W_0(Eigen::seq(1, W_0.rows()-2), Eigen::seq(1, W_0.cols()-2)),
-    //                                                                                               W_1(Eigen::seq(1, W_0.rows()-2), Eigen::seq(1, W_0.cols()-2)),
-    //                                                                                               W_2(Eigen::seq(1, W_0.rows()-2), Eigen::seq(1, W_0.cols()-2)),
-    //                                                                                               W_3(Eigen::seq(1, W_0.rows()-2), Eigen::seq(1, W_0.cols()-2)));
-    // write_plot3d_2d(W_0_vertex, W_1_vertex, W_2_vertex, W_3_vertex, Mach, alpha, 0, 0, rho_inf, U_ref, output_file);
+    auto [W_0_vertex, W_1_vertex, W_2_vertex, W_3_vertex] = cell_dummy_to_vertex_centered_airfoil(W_0(Eigen::seq(1, W_0.rows()-2), Eigen::seq(1, W_0.cols()-2)),
+                                                                                                  W_1(Eigen::seq(1, W_0.rows()-2), Eigen::seq(1, W_0.cols()-2)),
+                                                                                                  W_2(Eigen::seq(1, W_0.rows()-2), Eigen::seq(1, W_0.cols()-2)),
+                                                                                                  W_3(Eigen::seq(1, W_0.rows()-2), Eigen::seq(1, W_0.cols()-2)));
+    write_plot3d_2d(W_0_vertex, W_1_vertex, W_2_vertex, W_3_vertex, Mach, alpha, 0, 0, rho_inf, U_ref, output_file);
 
     return 0;
 
