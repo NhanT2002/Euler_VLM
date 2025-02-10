@@ -158,11 +158,6 @@ std::tuple<Eigen::ArrayXXd, Eigen::ArrayXXd, Eigen::ArrayXXd, Eigen::ArrayXXd, s
     double a4 = 0.5; double b4 = 0.0;
     double a5 = 1.0; double b5 = 0.44;
 
-
-    current_state.run_even();
-    // Initialize Rd0
-    current_state.update_Rd0();
-
     Eigen::ArrayXXd dt;
     Eigen::ArrayXXd dW_0, dW_1, dW_2, dW_3;
     Eigen::ArrayXXd W0_0, W1_0, W2_0, W3_0;
@@ -183,6 +178,10 @@ std::tuple<Eigen::ArrayXXd, Eigen::ArrayXXd, Eigen::ArrayXXd, Eigen::ArrayXXd, s
 
     if (res_smoothing == 0) {
         for (int it = 0; it < it_max; it++) {
+            current_state.run_even();
+            // Initialize Rd0
+            current_state.update_Rd0();
+
             W0_0 = current_state.W_0(seqy, seqx);
             W1_0 = current_state.W_1(seqy, seqx);
             W2_0 = current_state.W_2(seqy, seqx);
@@ -302,7 +301,13 @@ std::tuple<Eigen::ArrayXXd, Eigen::ArrayXXd, Eigen::ArrayXXd, Eigen::ArrayXXd, s
             current_state.W_3(seqy, seqx) = W3_0 + dW_3;
 
             current_state.update_conservative_variables();
-            current_state.run_odd();
+            // current_state.run_odd();
+            
+            // std::cout << "stage 5\n";
+            // std::cout << "current_state.W_0\n" << current_state.W_0 << std::endl;
+            // std::cout << "current_state.W_1\n" << current_state.W_1 << std::endl;
+            // std::cout << "current_state.W_2\n" << current_state.W_2 << std::endl;
+            // std::cout << "current_state.W_3\n" << current_state.W_3 << std::endl;
         
 
             auto L2_norm = compute_L2_norm(dW_0, dW_1, dW_2, dW_3);
@@ -320,7 +325,7 @@ std::tuple<Eigen::ArrayXXd, Eigen::ArrayXXd, Eigen::ArrayXXd, Eigen::ArrayXXd, s
             std::cout << "C_l: " << C_l << " C_d: " << C_d << " C_m: " << C_m << "\n";
 
             // Check for convergence
-            if (L2_norm(0) < convergence_tol && L2_norm(1) < convergence_tol && L2_norm(2) < convergence_tol && L2_norm(3) < convergence_tol) {
+            if (L2_norm(0) < convergence_tol) {
                 break;
             }
         }
@@ -328,6 +333,10 @@ std::tuple<Eigen::ArrayXXd, Eigen::ArrayXXd, Eigen::ArrayXXd, Eigen::ArrayXXd, s
     else {
         Eigen::ArrayXXd R_star_star_0, R_star_star_1, R_star_star_2, R_star_star_3;
         for (int it = 0; it < it_max; it++) {
+            current_state.run_even();
+            // Initialize Rd0
+            current_state.update_Rd0();
+
             W0_0 = current_state.W_0(seqy, seqx);
             W1_0 = current_state.W_1(seqy, seqx);
             W2_0 = current_state.W_2(seqy, seqx);
@@ -448,7 +457,6 @@ std::tuple<Eigen::ArrayXXd, Eigen::ArrayXXd, Eigen::ArrayXXd, Eigen::ArrayXXd, s
             current_state.W_3(seqy, seqx) = W3_0 - a5*R_star_star_3;
 
             current_state.update_conservative_variables();
-            current_state.run_odd();
         
 
             auto L2_norm = compute_L2_norm(dW_0, dW_1, dW_2, dW_3);
@@ -482,8 +490,9 @@ std::tuple<double, double, double> TemporalDiscretization::compute_coeff() {
     double c = 1.0;
 
     auto seqx = Eigen::seq(2, current_state.ncells_x-3);    
-    double Fx = (current_state.p_cells(2, seqx)*current_state.nx_x(2, seqx)*current_state.Ds_x(2, seqx)).sum();
-    double Fy = (current_state.p_cells(2, seqx)*current_state.nx_y(2, seqx)*current_state.Ds_x(2, seqx)).sum();
+    Eigen::ArrayXXd p_wall = 0.5*(3*current_state.p_cells(2, seqx) - current_state.p_cells(3, seqx));
+    double Fx = (p_wall*current_state.nx_x(2, seqx)*current_state.Ds_x(2, seqx)).sum();
+    double Fy = (p_wall*current_state.nx_y(2, seqx)*current_state.Ds_x(2, seqx)).sum();
 
     Eigen::ArrayXXd x_mid = 0.5*(current_state.x(0, Eigen::seq(0, x.cols()-2)) + current_state.x(0, Eigen::seq(1, x.cols()-1)));
     Eigen::ArrayXXd y_mid = 0.5*(current_state.y(0, Eigen::seq(0, x.cols()-2)) + current_state.y(0, Eigen::seq(1, x.cols()-1)));

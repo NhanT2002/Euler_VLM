@@ -354,29 +354,37 @@ void SpatialDiscretization::update_halo() {
 
 void SpatialDiscretization::compute_dummy_cells() {
     // Solid wall
-    Eigen::Array<double, 1, Eigen::Dynamic> V = nx_x(2, Eigen::all)*u_cells(2, Eigen::all) + nx_y(2, Eigen::all)*v_cells(2, Eigen::all);
-    Eigen::Array<double, 1, Eigen::Dynamic> u_dummy = u_cells(2, Eigen::all) - 2*V*nx_x(2, Eigen::all);
-    Eigen::Array<double, 1, Eigen::Dynamic> v_dummy = v_cells(2, Eigen::all) - 2*V*nx_y(2, Eigen::all);
-    Eigen::Array<double, 1, Eigen::Dynamic> rho_dummy = rho_cells(2, Eigen::all);
+    // Eigen::Array<double, 1, Eigen::Dynamic> V = nx_x(2, Eigen::all)*u_cells(2, Eigen::all) + nx_y(2, Eigen::all)*v_cells(2, Eigen::all);
+    // Eigen::Array<double, 1, Eigen::Dynamic> u_dummy = u_cells(2, Eigen::all) - 2*V*nx_x(2, Eigen::all);
+    // Eigen::Array<double, 1, Eigen::Dynamic> v_dummy = v_cells(2, Eigen::all) - 2*V*nx_y(2, Eigen::all);
+    // Eigen::Array<double, 1, Eigen::Dynamic> rho_dummy = rho_cells(2, Eigen::all);
     
-    Eigen::Array<double, 1, Eigen::Dynamic> E_dummy = E_cells(2, Eigen::all);
-    Eigen::Array<double, 1, Eigen::Dynamic> p_dummy  = (1.4-1)*rho_dummy*(E_dummy - 0.5*(u_dummy*u_dummy + v_dummy*v_dummy));
+    // Eigen::Array<double, 1, Eigen::Dynamic> E_dummy = E_cells(2, Eigen::all);
+    // Eigen::Array<double, 1, Eigen::Dynamic> p_dummy  = (1.4-1)*rho_dummy*(E_dummy - 0.5*(u_dummy*u_dummy + v_dummy*v_dummy));
 
-    // Eigen::Array<double, 1, Eigen::Dynamic> p_wall = 0.125*(15*p_cells(2, Eigen::all) - 10*p_cells(3, Eigen::all) + 3*p_cells(4, Eigen::all));
-    // Eigen::Array<double, 1, Eigen::Dynamic> p_dummy = 2*p_wall - p_cells(2, Eigen::all);
-    // Eigen::Array<double, 1, Eigen::Dynamic> E_dummy = p_dummy/(rho_dummy*(1.4-1)) + 0.5*(u_dummy*u_dummy + v_dummy*v_dummy);
+    // rho_cells.row(1) = rho_dummy;
+    // u_cells.row(1) = u_dummy;
+    // v_cells.row(1) = v_dummy;
+    // E_cells.row(1) = E_dummy;
+    // p_cells.row(1) = p_dummy;
 
-    rho_cells.row(1) = rho_dummy;
-    u_cells.row(1) = u_dummy;
-    v_cells.row(1) = v_dummy;
-    E_cells.row(1) = E_dummy;
-    p_cells.row(1) = p_dummy;
+    // rho_cells.row(0) = rho_dummy;
+    // u_cells.row(0) = u_dummy;
+    // v_cells.row(0) = v_dummy;
+    // E_cells.row(0) = E_dummy;
+    // p_cells.row(0) = p_dummy;
 
-    rho_cells.row(0) = rho_dummy;
-    u_cells.row(0) = u_dummy;
-    v_cells.row(0) = v_dummy;
-    E_cells.row(0) = E_dummy;
-    p_cells.row(0) = p_dummy;
+    rho_cells.row(1) = 2*rho_cells.row(2) - rho_cells.row(3);
+    u_cells.row(1) = (2*u_cells.row(2)*rho_cells.row(2) - u_cells.row(3)*rho_cells.row(3))/rho_cells.row(1);
+    v_cells.row(1) = (2*v_cells.row(2)*rho_cells.row(2) - v_cells.row(3)*rho_cells.row(3))/rho_cells.row(1);
+    E_cells.row(1) = (2*E_cells.row(2)*rho_cells.row(2) - E_cells.row(3)*rho_cells.row(3))/rho_cells.row(1);
+    p_cells.row(1) = (1.4-1)*rho_cells.row(1)*(E_cells.row(1) - 0.5*(u_cells.row(1)*u_cells.row(1) + v_cells.row(1)*v_cells.row(1)));
+
+    rho_cells.row(0) = 3*rho_cells.row(2) - 2*rho_cells.row(3);
+    u_cells.row(0) = (3*u_cells.row(2)*rho_cells.row(2) - 2*u_cells.row(3)*rho_cells.row(3))/rho_cells.row(0);
+    v_cells.row(0) = (3*v_cells.row(2)*rho_cells.row(2) - 2*v_cells.row(3)*rho_cells.row(3))/rho_cells.row(0);
+    E_cells.row(0) = (3*E_cells.row(2)*rho_cells.row(2) - 2*E_cells.row(3)*rho_cells.row(3))/rho_cells.row(0);
+    p_cells.row(0) = (1.4-1)*rho_cells.row(0)*(E_cells.row(0) - 0.5*(u_cells.row(0)*u_cells.row(0) + v_cells.row(0)*v_cells.row(0)));
 
     // Far field
     int j_last_cells = ncells_y - 3;
@@ -419,17 +427,29 @@ void SpatialDiscretization::compute_dummy_cells() {
                 double v_b = v_d + ny*(p_d - p_b)/(rho_d*c);
                 double E_b = p_b/(rho_b*(1.4-1)) + 0.5*(u_b*u_b + v_b*v_b);
 
-                rho_cells(j, i) = 2*rho_b - rho_d;
-                u_cells(j, i) = (2*(u_b*rho_b) - (u_d*rho_d))/rho_cells(j, i);
-                v_cells(j, i) = (2*(v_b*rho_b) - (v_d*rho_d))/rho_cells(j, i);
-                E_cells(j, i) = (2*(E_b*rho_b) - (E_d*rho_d))/rho_cells(j, i);
-                p_cells(j, i) = (1.4-1)*rho_cells(j, i)*(E_cells(j, i) - 0.5*(u_cells(j, i)*u_cells(j, i) + v_cells(j, i)*v_cells(j, i)));
+                // rho_cells(j, i) = 2*rho_b - rho_d;
+                // u_cells(j, i) = (2*(u_b*rho_b) - (u_d*rho_d))/rho_cells(j, i);
+                // v_cells(j, i) = (2*(v_b*rho_b) - (v_d*rho_d))/rho_cells(j, i);
+                // E_cells(j, i) = (2*(E_b*rho_b) - (E_d*rho_d))/rho_cells(j, i);
+                // p_cells(j, i) = (1.4-1)*rho_cells(j, i)*(E_cells(j, i) - 0.5*(u_cells(j, i)*u_cells(j, i) + v_cells(j, i)*v_cells(j, i)));
 
-                rho_cells(jj, i) = rho_cells(j, i);
-                u_cells(jj, i) = u_cells(j, i);
-                v_cells(jj, i) = v_cells(j, i);
-                E_cells(jj, i) = E_cells(j, i);
-                p_cells(jj, i) = p_cells(j, i);
+                // rho_cells(jj, i) = rho_cells(j, i);
+                // u_cells(jj, i) = u_cells(j, i);
+                // v_cells(jj, i) = v_cells(j, i);
+                // E_cells(jj, i) = E_cells(j, i);
+                // p_cells(jj, i) = p_cells(j, i);
+
+                rho_cells(j, i) = rho_b;
+                u_cells(j, i) = u_b;
+                v_cells(j, i) = v_b;
+                E_cells(j, i) = E_b;
+                p_cells(j, i) = p_b;
+
+                rho_cells(jj, i) = 2*rho_cells(j, i) - rho_cells(j-1, i);
+                u_cells(jj, i) = 2*u_cells(j, i) - u_cells(j-1, i);
+                v_cells(jj, i) = 2*v_cells(j, i) - v_cells(j-1, i);
+                E_cells(jj, i) = 2*E_cells(j, i) - E_cells(j-1, i);
+                p_cells(jj, i) = 2*p_cells(j, i) - p_cells(j-1, i);
 
                 }
         }
@@ -454,17 +474,29 @@ void SpatialDiscretization::compute_dummy_cells() {
                 double v_b = this->v - ny*(this->p - p_b)/(rho_d*c);
                 double E_b = p_b/(rho_b*(1.4-1)) + 0.5*(u_b*u_b + v_b*v_b);
 
-                rho_cells(j, i) = 2*rho_b - rho_d;
-                u_cells(j, i) = (2*(u_b*rho_b) - (u_d*rho_d))/rho_cells(j, i);
-                v_cells(j, i) = (2*(v_b*rho_b) - (v_d*rho_d))/rho_cells(j, i);
-                E_cells(j, i) = (2*(E_b*rho_b) - (E_d*rho_d))/rho_cells(j, i);
-                p_cells(j, i) = (1.4-1)*rho_cells(j, i)*(E_cells(j, i) - 0.5*(u_cells(j, i)*u_cells(j, i) + v_cells(j, i)*v_cells(j, i)));
+                // rho_cells(j, i) = 2*rho_b - rho_d;
+                // u_cells(j, i) = (2*(u_b*rho_b) - (u_d*rho_d))/rho_cells(j, i);
+                // v_cells(j, i) = (2*(v_b*rho_b) - (v_d*rho_d))/rho_cells(j, i);
+                // E_cells(j, i) = (2*(E_b*rho_b) - (E_d*rho_d))/rho_cells(j, i);
+                // p_cells(j, i) = (1.4-1)*rho_cells(j, i)*(E_cells(j, i) - 0.5*(u_cells(j, i)*u_cells(j, i) + v_cells(j, i)*v_cells(j, i)));
 
-                rho_cells(jj, i) = rho_cells(j, i);
-                u_cells(jj, i) = u_cells(j, i);
-                v_cells(jj, i) = v_cells(j, i);
-                E_cells(jj, i) = E_cells(j, i);
-                p_cells(jj, i) = p_cells(j, i);
+                // rho_cells(jj, i) = rho_cells(j, i);
+                // u_cells(jj, i) = u_cells(j, i);
+                // v_cells(jj, i) = v_cells(j, i);
+                // E_cells(jj, i) = E_cells(j, i);
+                // p_cells(jj, i) = p_cells(j, i);
+
+                rho_cells(j, i) = rho_b;
+                u_cells(j, i) = u_b;
+                v_cells(j, i) = v_b;
+                E_cells(j, i) = E_b;
+                p_cells(j, i) = p_b;
+
+                rho_cells(jj, i) = 2*rho_cells(j, i) - rho_cells(j-1, i);
+                u_cells(jj, i) = 2*u_cells(j, i) - u_cells(j-1, i);
+                v_cells(jj, i) = 2*v_cells(j, i) - v_cells(j-1, i);
+                E_cells(jj, i) = 2*E_cells(j, i) - E_cells(j-1, i);
+                p_cells(jj, i) = 2*p_cells(j, i) - p_cells(j-1, i);
             }
         }
     }
@@ -478,10 +510,17 @@ std::tuple<Eigen::ArrayXXd, Eigen::ArrayXXd, Eigen::ArrayXXd, Eigen::ArrayXXd> S
     return {rhoo*V*Ds, (rhoo*uu*V + nx*pp)*Ds, (rhoo*vv*V + ny*pp)*Ds, rhoo*H*V*Ds};
 }
 
+std::tuple<Eigen::ArrayXXd, Eigen::ArrayXXd, Eigen::ArrayXXd, Eigen::ArrayXXd> SpatialDiscretization::FcDs_wall(const Eigen::ArrayXXd& pp, const Eigen::ArrayXXd& nx, const Eigen::ArrayXXd& ny, const Eigen::ArrayXXd& Ds) {
+    Eigen::ArrayXXd V = Eigen::ArrayXXd::Zero(nx.rows(), nx.cols());
+
+    return {V, nx*pp*Ds, ny*pp*Ds, V};
+}
+
 void SpatialDiscretization::compute_flux() {
-    auto seqy = Eigen::seq(2, ncells_y-2);
+    // The wall flux will be computed later
+    auto seqy = Eigen::seq(3, ncells_y-2);
     auto seqx = Eigen::seq(2, ncells_x-2);
-    auto seqy_m1 = Eigen::seq(1, ncells_y-3);
+    auto seqy_m1 = Eigen::seq(2, ncells_y-3);
     auto seqx_m1 = Eigen::seq(1, ncells_x-3);
 
     // y direction
@@ -495,14 +534,28 @@ void SpatialDiscretization::compute_flux() {
     Eigen::ArrayXXd avg_E = avg_W_3 / avg_W_0;
     Eigen::ArrayXXd avg_p = (1.4-1)*avg_W_0*(avg_E - 0.5*(avg_u*avg_u + avg_v*avg_v));
 
-    auto [Fcy0, Fcy1, Fcy2, Fcy3] = FcDs(avg_W_0, avg_u, avg_v, avg_E, avg_p, nx_x(seqy, seqx), nx_y(seqy, seqx), Ds_x(seqy, seqx));
+    Eigen::ArrayXXd p_wall = 0.5*(3*p_cells(2, seqx) - p_cells(3, seqx));
 
-    fluxy_0 = Fcy0;
-    fluxy_1 = Fcy1;
-    fluxy_2 = Fcy2;
-    fluxy_3 = Fcy3;
+    auto [Fcy0, Fcy1, Fcy2, Fcy3] = FcDs(avg_W_0, avg_u, avg_v, avg_E, avg_p, nx_x(seqy, seqx), nx_y(seqy, seqx), Ds_x(seqy, seqx));
+    auto [Fcy0_wall, Fcy1_wall, Fcy2_wall, Fcy3_wall] = FcDs_wall(p_wall, nx_x(2, seqx), nx_y(2, seqx), Ds_x(2, seqx));
+
+    fluxy_0(Eigen::seq(1, ncells_domain_y), Eigen::all) = Fcy0;
+    fluxy_1(Eigen::seq(1, ncells_domain_y), Eigen::all) = Fcy1;
+    fluxy_2(Eigen::seq(1, ncells_domain_y), Eigen::all) = Fcy2;
+    fluxy_3(Eigen::seq(1, ncells_domain_y), Eigen::all) = Fcy3;
+
+    fluxy_0.row(0) = Fcy0_wall;
+    fluxy_1.row(0) = Fcy1_wall;
+    fluxy_2.row(0) = Fcy2_wall;
+    fluxy_3.row(0) = Fcy3_wall;
 
     // x direction
+
+    seqy = Eigen::seq(2, ncells_y-2);
+    seqx = Eigen::seq(2, ncells_x-2);
+    seqy_m1 = Eigen::seq(1, ncells_y-3);
+    seqx_m1 = Eigen::seq(1, ncells_x-3);
+
     avg_W_0 = 0.5*(W_0(seqy, seqx) + W_0(seqy, seqx_m1));
     avg_W_1 = 0.5*(W_1(seqy, seqx) + W_1(seqy, seqx_m1));
     avg_W_2 = 0.5*(W_2(seqy, seqx) + W_2(seqy, seqx_m1));
@@ -522,11 +575,15 @@ void SpatialDiscretization::compute_flux() {
 }
 
 void SpatialDiscretization::compute_lambda() {
-    Eigen::ArrayXXd cc_cells = 1.4*p_cells/rho_cells;
+    // Eigen::ArrayXXd cc_cells = (1.4*p_cells/rho_cells);
+    // Lambda_I = (u_cells*sy_x_avg + v_cells*sy_y_avg).abs() + (cc_cells*(sy_x_avg*sy_x_avg+sy_y_avg*sy_y_avg)).sqrt();
+    // Lambda_J = (u_cells*sx_x_avg + v_cells*sx_y_avg).abs() + (cc_cells*(sx_x_avg*sx_x_avg+sx_y_avg*sx_y_avg)).sqrt();
 
-
-    Lambda_I = (u_cells*sy_x_avg + v_cells*sy_y_avg).abs() + (cc_cells*(sy_x_avg*sy_x_avg+sy_y_avg*sy_y_avg)).sqrt();
-    Lambda_J = (u_cells*sx_x_avg + v_cells*sx_y_avg).abs() + (cc_cells*(sx_x_avg*sx_x_avg+sx_y_avg*sx_y_avg)).sqrt();
+    Eigen::ArrayXXd c_cells = (1.4*p_cells/rho_cells).sqrt();
+    Eigen::ArrayXXd V_I = u_cells*ny_x_avg + v_cells*ny_y_avg;
+    Eigen::ArrayXXd V_J = u_cells*nx_x_avg + v_cells*nx_y_avg;
+    Lambda_I = (V_I.abs() + c_cells)*Ds_y_avg;
+    Lambda_J = (V_J.abs() + c_cells)*Ds_x_avg;
     
     halo(Lambda_I);
     halo(Lambda_J);
@@ -575,18 +632,18 @@ void SpatialDiscretization::compute_dissipation() {
     dissipy_3 = Lambda_y_S*(eps2_y*(W_3(seqy_m1, seqx)-W_3(seqy, seqx)) - eps4_y*(W_3(seqy_m2, seqx)-3*W_3(seqy_m1, seqx)+3*W_3(seqy, seqx)-W_3(seqy_p1, seqx)));
   
 
-    // Boundary conditions -----------------------------------------------to test if effective -----------------------------------------------
-    // Calculate dissipx for cells (3, i)
-    dissipy_0.row(1) = Lambda_y_S.row(1)*(eps2_y.row(1)*(W_0(2,seqx)-W_0(3,seqx)) - eps4_y.row(1)*(2*W_0(3,seqx) - W_0(2,seqx) - W_0(4,seqx)));
-    dissipy_1.row(1) = Lambda_y_S.row(1)*(eps2_y.row(1)*(W_1(2,seqx)-W_1(3,seqx)) - eps4_y.row(1)*(2*W_1(3,seqx) - W_1(2,seqx) - W_1(4,seqx)));
-    dissipy_2.row(1) = Lambda_y_S.row(1)*(eps2_y.row(1)*(W_2(2,seqx)-W_2(3,seqx)) - eps4_y.row(1)*(2*W_2(3,seqx) - W_2(2,seqx) - W_2(4,seqx)));
-    dissipy_3.row(1) = Lambda_y_S.row(1)*(eps2_y.row(1)*(W_3(2,seqx)-W_3(3,seqx)) - eps4_y.row(1)*(2*W_3(3,seqx) - W_3(2,seqx) - W_3(4,seqx)));
+    // // Boundary conditions -----------------------------------------------to test if effective -----------------------------------------------
+    // // Calculate dissipx for cells (3, i)
+    // dissipy_0.row(1) = Lambda_y_S.row(1)*(eps2_y.row(1)*(W_0(2,seqx)-W_0(3,seqx)) - eps4_y.row(1)*(2*W_0(3,seqx) - W_0(2,seqx) - W_0(4,seqx)));
+    // dissipy_1.row(1) = Lambda_y_S.row(1)*(eps2_y.row(1)*(W_1(2,seqx)-W_1(3,seqx)) - eps4_y.row(1)*(2*W_1(3,seqx) - W_1(2,seqx) - W_1(4,seqx)));
+    // dissipy_2.row(1) = Lambda_y_S.row(1)*(eps2_y.row(1)*(W_2(2,seqx)-W_2(3,seqx)) - eps4_y.row(1)*(2*W_2(3,seqx) - W_2(2,seqx) - W_2(4,seqx)));
+    // dissipy_3.row(1) = Lambda_y_S.row(1)*(eps2_y.row(1)*(W_3(2,seqx)-W_3(3,seqx)) - eps4_y.row(1)*(2*W_3(3,seqx) - W_3(2,seqx) - W_3(4,seqx)));
 
-    // Calculate dissipx for cells (2, i)
-    dissipy_0.row(0) = Lambda_y_S.row(0)*(eps2_y.row(0)*(W_0(2,seqx)-W_0(3,seqx)) - eps4_y.row(0)*(2*W_0(3,seqx) - W_0(2,seqx) - W_0(4,seqx)));
-    dissipy_1.row(0) = Lambda_y_S.row(0)*(eps2_y.row(0)*(W_1(2,seqx)-W_1(3,seqx)) - eps4_y.row(0)*(2*W_1(3,seqx) - W_1(2,seqx) - W_1(4,seqx)));
-    dissipy_2.row(0) = Lambda_y_S.row(0)*(eps2_y.row(0)*(W_2(2,seqx)-W_2(3,seqx)) - eps4_y.row(0)*(2*W_2(3,seqx) - W_2(2,seqx) - W_2(4,seqx)));
-    dissipy_3.row(0) = Lambda_y_S.row(0)*(eps2_y.row(0)*(W_3(2,seqx)-W_3(3,seqx)) - eps4_y.row(0)*(2*W_3(3,seqx) - W_3(2,seqx) - W_3(4,seqx)));
+    // // Calculate dissipx for cells (2, i)
+    // dissipy_0.row(0) = Lambda_y_S.row(0)*(eps2_y.row(0)*(W_0(2,seqx)-W_0(3,seqx)) - eps4_y.row(0)*(2*W_0(3,seqx) - W_0(2,seqx) - W_0(4,seqx)));
+    // dissipy_1.row(0) = Lambda_y_S.row(0)*(eps2_y.row(0)*(W_1(2,seqx)-W_1(3,seqx)) - eps4_y.row(0)*(2*W_1(3,seqx) - W_1(2,seqx) - W_1(4,seqx)));
+    // dissipy_2.row(0) = Lambda_y_S.row(0)*(eps2_y.row(0)*(W_2(2,seqx)-W_2(3,seqx)) - eps4_y.row(0)*(2*W_2(3,seqx) - W_2(2,seqx) - W_2(4,seqx)));
+    // dissipy_3.row(0) = Lambda_y_S.row(0)*(eps2_y.row(0)*(W_3(2,seqx)-W_3(3,seqx)) - eps4_y.row(0)*(2*W_3(3,seqx) - W_3(2,seqx) - W_3(4,seqx)));
 }
 
 void SpatialDiscretization::compute_Rc() {

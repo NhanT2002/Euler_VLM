@@ -141,11 +141,14 @@ int main(int argc, char* argv[]) {
         SpatialDiscretization h_state(x, y, rho, u, v, E, T, p, k2_coeff, k4_coeff, T_inf, U_ref);
         Multigrid multigrid_solver(h_state, CFL_number, residual_smoothing, k2_coeff, k4_coeff);
 
-        SpatialDiscretization h2_state = multigrid_solver.mesh_restriction(h_state);    
+        SpatialDiscretization h2_state = multigrid_solver.mesh_restriction(h_state);
+        h2_state.k4_coeff = 4;
         multigrid_solver.restriction(h_state, h2_state);
         SpatialDiscretization h4_state = multigrid_solver.mesh_restriction(h2_state);
+        h4_state.k4_coeff = 4;
         multigrid_solver.restriction(h2_state, h4_state);
         SpatialDiscretization h8_state = multigrid_solver.mesh_restriction(h4_state);
+        h8_state.k4_coeff = 4;
         multigrid_solver.restriction(h4_state, h8_state);
 
         std::tie(W_0, W_1, W_2, W_3, Residuals) = multigrid_solver.restriction_timestep(h8_state, 10);
@@ -211,6 +214,11 @@ int main(int argc, char* argv[]) {
         TemporalDiscretization FVM(x, y, rho, u, v, E, T, p, T_inf, U_ref, CFL_number, residual_smoothing, k2_coeff, k4_coeff);
         std::tie(W_0, W_1, W_2, W_3, iteration_residuals, iteration_times) = FVM.RungeKutta(it_max);
         save_time_residuals(iteration_times, iteration_residuals, checkpoint_file);
+
+        // SpatialDiscretization h_state(x, y, rho, u, v, E, T, p, k2_coeff, k4_coeff, T_inf, U_ref);
+        // h_state.run_even();
+        // std::cout << "fluxy_0\n" << h_state.fluxy_0 << std::endl;
+        // std::cout << "fluxy_1\n" << h_state.fluxy_1 << std::endl;
     }
 
     
@@ -220,11 +228,11 @@ int main(int argc, char* argv[]) {
     std::chrono::duration<double> serialDuration = end - start;
     std::cout << "\nSolver duration: " << serialDuration.count() << " seconds\n";
 
-    auto [W_0_vertex, W_1_vertex, W_2_vertex, W_3_vertex] = cell_dummy_to_vertex_centered_airfoil(W_0(Eigen::seq(1, W_0.rows()-2), Eigen::seq(1, W_0.cols()-2)),
-                                                                                                  W_1(Eigen::seq(1, W_0.rows()-2), Eigen::seq(1, W_0.cols()-2)),
-                                                                                                  W_2(Eigen::seq(1, W_0.rows()-2), Eigen::seq(1, W_0.cols()-2)),
-                                                                                                  W_3(Eigen::seq(1, W_0.rows()-2), Eigen::seq(1, W_0.cols()-2)));
-    write_plot3d_2d(W_0_vertex, W_1_vertex, W_2_vertex, W_3_vertex, Mach, alpha, 0, 0, rho_inf, U_ref, output_file);
+    // auto [W_0_vertex, W_1_vertex, W_2_vertex, W_3_vertex] = cell_dummy_to_vertex_centered_airfoil(W_0(Eigen::seq(1, W_0.rows()-2), Eigen::seq(1, W_0.cols()-2)),
+    //                                                                                               W_1(Eigen::seq(1, W_0.rows()-2), Eigen::seq(1, W_0.cols()-2)),
+    //                                                                                               W_2(Eigen::seq(1, W_0.rows()-2), Eigen::seq(1, W_0.cols()-2)),
+    //                                                                                               W_3(Eigen::seq(1, W_0.rows()-2), Eigen::seq(1, W_0.cols()-2)));
+    // write_plot3d_2d(W_0_vertex, W_1_vertex, W_2_vertex, W_3_vertex, Mach, alpha, 0, 0, rho_inf, U_ref, output_file);
 
     return 0;
 

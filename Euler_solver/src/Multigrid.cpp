@@ -195,8 +195,9 @@ std::tuple<double, double, double> Multigrid::compute_coeff(SpatialDiscretizatio
     double c = 1.0;
 
     auto seqx = Eigen::seq(2, current_state.ncells_x-3);    
-    double Fx = (current_state.p_cells(2, seqx)*current_state.nx_x(2, seqx)*current_state.Ds_x(2, seqx)).sum();
-    double Fy = (current_state.p_cells(2, seqx)*current_state.nx_y(2, seqx)*current_state.Ds_x(2, seqx)).sum();
+    Eigen::ArrayXXd p_wall = 0.5*(3*current_state.p_cells(2, seqx) - current_state.p_cells(3, seqx));
+    double Fx = (p_wall*current_state.nx_x(2, seqx)*current_state.Ds_x(2, seqx)).sum();
+    double Fy = (p_wall*current_state.nx_y(2, seqx)*current_state.Ds_x(2, seqx)).sum();
 
     Eigen::ArrayXXd x_mid = 0.5*(current_state.x(0, Eigen::seq(0, current_state.x.cols()-2)) + current_state.x(0, Eigen::seq(1, current_state.x.cols()-1)));
     Eigen::ArrayXXd y_mid = 0.5*(current_state.y(0, Eigen::seq(0, current_state.x.cols()-2)) + current_state.y(0, Eigen::seq(1, current_state.x.cols()-1)));
@@ -277,8 +278,6 @@ std::tuple<Eigen::ArrayXXd, Eigen::ArrayXXd, Eigen::ArrayXXd, Eigen::ArrayXXd, s
     double a5 = 1.0; double b5 = 0.44;                                                                                                                    
     multigrid_convergence = false;
 
-    // h_state.run_even();
-    // h_state.update_Rd0();
 
     Eigen::ArrayXXd dt;
     Eigen::ArrayXXd dW_0, dW_1, dW_2, dW_3;

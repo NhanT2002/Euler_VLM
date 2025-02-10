@@ -160,6 +160,8 @@ public:
     std::tuple<Eigen::ArrayXXd, Eigen::ArrayXXd, Eigen::ArrayXXd, Eigen::ArrayXXd> FcDs(const Eigen::ArrayXXd& rhoo, const Eigen::ArrayXXd& uu, const Eigen::ArrayXXd& vv, const Eigen::ArrayXXd& EE, const Eigen::ArrayXXd& pp, 
                                             const Eigen::ArrayXXd& nx, const Eigen::ArrayXXd& ny, const Eigen::ArrayXXd& Ds);
 
+    std::tuple<Eigen::ArrayXXd, Eigen::ArrayXXd, Eigen::ArrayXXd, Eigen::ArrayXXd> FcDs_wall(const Eigen::ArrayXXd& pp, const Eigen::ArrayXXd& nx, const Eigen::ArrayXXd& ny, const Eigen::ArrayXXd& Ds);
+
 
     std::tuple<Eigen::ArrayXXd, Eigen::ArrayXXd> compute_epsilon(const Eigen::ArrayXXd& p_Im1, const Eigen::ArrayXXd& p, const Eigen::ArrayXXd& p_Ip1, const Eigen::ArrayXXd& p_Ip2, double k2 = 1.0/4.0, double k4 = 1.0/64.0);
 
