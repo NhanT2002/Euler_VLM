@@ -525,8 +525,8 @@ public:
                 double lambda_j = (abs(Vj) + c)*avg_faces(i, j, 0, 2);
 
                 // index corrected to be compatible with dissipation computation
-                // lambda(i, j, 0) = lambda_i;
-                // lambda(i, j, 1) = lambda_j;
+                lambda(i, j, 0) = lambda_i;
+                lambda(i, j, 1) = lambda_j;
                 lambda(i, j, 2) = lambda_i + lambda_j;
             }
         }
@@ -556,7 +556,8 @@ public:
                     int m1i = -face_i[k] + i;
                     int m1j = -face_j[k] + j;
 
-                    double lambda_s = 0.5*(lambda(i, j, 2) + lambda(p1i, p1j, 2));
+                    // double lambda_s = 0.5*(lambda(i, j, 2) + lambda(p1i, p1j, 2));
+                    double lambda_s = max(lambda(i, j, k-1), lambda(p1i, p1j, k-1));
 
                     // TODO: if dissipation cannot be parallelized, epsilon computation can be
                     double eps2 = kappa2*max(upsilon(i, j, k-1), upsilon(p1i, p1j, k-1));
@@ -673,19 +674,19 @@ public:
 
             E_b = compute_E(pressure_b, rho_b, u_b, v_b);
 
-            cv(i, nj_cells-1, 0) = rho_b;
-            cv(i, nj_cells-1, 1) = rho_b*u_b;
-            cv(i, nj_cells-1, 2) = rho_b*v_b;
-            cv(i, nj_cells-1, 3) = rho_b*E_b;
-            update_dependent(i, nj_cells-1);
-
-
-            cv(i, nj_cells-2, 0) = 2.0*cv(i, nj_cells-1, 0) - cv(i, nj_cells-3,  0);
-            cv(i, nj_cells-2, 1) = 2.0*cv(i, nj_cells-1, 1) - cv(i, nj_cells-3,  1);
-            cv(i, nj_cells-2, 2) = 2.0*cv(i, nj_cells-1, 2) - cv(i, nj_cells-3,  2);
-            cv(i, nj_cells-2, 3) = 2.0*cv(i, nj_cells-1, 3) - cv(i, nj_cells-3,  3);
-
+            cv(i, nj_cells-2, 0) = rho_b;
+            cv(i, nj_cells-2, 1) = rho_b*u_b;
+            cv(i, nj_cells-2, 2) = rho_b*v_b;
+            cv(i, nj_cells-2, 3) = rho_b*E_b;
             update_dependent(i, nj_cells-2);
+
+
+            cv(i, nj_cells-1, 0) = 2.0*cv(i, nj_cells-2, 0) - cv(i, nj_cells-3,  0);
+            cv(i, nj_cells-1, 1) = 2.0*cv(i, nj_cells-2, 1) - cv(i, nj_cells-3,  1);
+            cv(i, nj_cells-1, 2) = 2.0*cv(i, nj_cells-2, 2) - cv(i, nj_cells-3,  2);
+            cv(i, nj_cells-1, 3) = 2.0*cv(i, nj_cells-2, 3) - cv(i, nj_cells-3,  3);
+
+            update_dependent(i, nj_cells-1);
         }
 
         // coordinate cut
@@ -800,7 +801,7 @@ public:
         double residual = 0.0;
 
         // TODO: reduction clause should be required here
-        #pragma omp parallel for collapse(2) schedule(dynamic, CHUNK_SIZE)
+        #pragma omp parallel for collapse(2) schedule(dynamic, CHUNK_SIZE) reduction(+:residual)
         for(int i = 2; i < ni_cells-2; i++ ) {
             for(int j = 2; j < nj_cells-2; j++) {
                 residual = residual + pow(cv_1(i, j, 0) - cv_0(i, j, 0), 2);
