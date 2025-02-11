@@ -534,7 +534,7 @@ void SpatialDiscretization::compute_flux() {
     Eigen::ArrayXXd avg_E = avg_W_3 / avg_W_0;
     Eigen::ArrayXXd avg_p = (1.4-1)*avg_W_0*(avg_E - 0.5*(avg_u*avg_u + avg_v*avg_v));
 
-    Eigen::ArrayXXd p_wall = 0.5*(3*p_cells(2, seqx) - p_cells(3, seqx));
+    Eigen::ArrayXXd p_wall = 0.125*(15*p_cells(2, seqx) - 10*p_cells(3, seqx) + 3*p_cells(4, seqx));
 
     auto [Fcy0, Fcy1, Fcy2, Fcy3] = FcDs(avg_W_0, avg_u, avg_v, avg_E, avg_p, nx_x(seqy, seqx), nx_y(seqy, seqx), Ds_x(seqy, seqx));
     auto [Fcy0_wall, Fcy1_wall, Fcy2_wall, Fcy3_wall] = FcDs_wall(p_wall, nx_x(2, seqx), nx_y(2, seqx), Ds_x(2, seqx));

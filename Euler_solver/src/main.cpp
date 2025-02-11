@@ -228,11 +228,11 @@ int main(int argc, char* argv[]) {
     std::chrono::duration<double> serialDuration = end - start;
     std::cout << "\nSolver duration: " << serialDuration.count() << " seconds\n";
 
-    // auto [W_0_vertex, W_1_vertex, W_2_vertex, W_3_vertex] = cell_dummy_to_vertex_centered_airfoil(W_0(Eigen::seq(1, W_0.rows()-2), Eigen::seq(1, W_0.cols()-2)),
-    //                                                                                               W_1(Eigen::seq(1, W_0.rows()-2), Eigen::seq(1, W_0.cols()-2)),
-    //                                                                                               W_2(Eigen::seq(1, W_0.rows()-2), Eigen::seq(1, W_0.cols()-2)),
-    //                                                                                               W_3(Eigen::seq(1, W_0.rows()-2), Eigen::seq(1, W_0.cols()-2)));
-    // write_plot3d_2d(W_0_vertex, W_1_vertex, W_2_vertex, W_3_vertex, Mach, alpha, 0, 0, rho_inf, U_ref, output_file);
+    auto [W_0_vertex, W_1_vertex, W_2_vertex, W_3_vertex] = cell_dummy_to_vertex_centered_airfoil(W_0(Eigen::seq(1, W_0.rows()-2), Eigen::seq(1, W_0.cols()-2)),
+                                                                                                  W_1(Eigen::seq(1, W_0.rows()-2), Eigen::seq(1, W_0.cols()-2)),
+                                                                                                  W_2(Eigen::seq(1, W_0.rows()-2), Eigen::seq(1, W_0.cols()-2)),
+                                                                                                  W_3(Eigen::seq(1, W_0.rows()-2), Eigen::seq(1, W_0.cols()-2)));
+    write_plot3d_2d(W_0_vertex, W_1_vertex, W_2_vertex, W_3_vertex, Mach, alpha, 0, 0, rho_inf, U_ref, output_file);
 
     return 0;
 

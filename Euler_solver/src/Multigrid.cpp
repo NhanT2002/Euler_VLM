@@ -195,7 +195,7 @@ std::tuple<double, double, double> Multigrid::compute_coeff(SpatialDiscretizatio
     double c = 1.0;
 
     auto seqx = Eigen::seq(2, current_state.ncells_x-3);    
-    Eigen::ArrayXXd p_wall = 0.5*(3*current_state.p_cells(2, seqx) - current_state.p_cells(3, seqx));
+    Eigen::ArrayXXd p_wall = 0.125*(15*current_state.p_cells(2, seqx) - 10*current_state.p_cells(3, seqx) + 3*current_state.p_cells(4, seqx));
     double Fx = (p_wall*current_state.nx_x(2, seqx)*current_state.Ds_x(2, seqx)).sum();
     double Fy = (p_wall*current_state.nx_y(2, seqx)*current_state.Ds_x(2, seqx)).sum();
 
