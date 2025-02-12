@@ -1,5 +1,5 @@
 num_threads = 8
-mesh_file = ../mesh/x.4
+mesh_file = ../mesh/x.2
 Mach = 0.5
 alpha = 1.25
 p_inf = 1E5
