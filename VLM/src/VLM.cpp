@@ -7,6 +7,9 @@
 #include <limits>
 #include <numeric>
 #include <Eigen/Dense>
+#include <map>
+#include <filesystem>
+#include <regex>
 # define M_PI 3.14159265358979323846 
 
 typedef double T;
@@ -87,13 +90,13 @@ struct Panel {
         Point c = p.p4 - p.p1;
         Point d = a.cross(b);
         Point e = b.cross(c);
-        return 0.5 * (std::sqrt(d.dot(d)) + std::sqrt(e.dot(e)));
+        return 0.5 * (d.longueur() + e.longueur());
     }
 
     // Calcul de la largeur d'un panneau
     double delta_y(const Panel& p) {
         Point a = p.p4 - p.p1;
-        return std::sqrt(a.dot(a));
+        return a.longueur();
     }
 
     // Calcul de la largeur d'un panneau (vecteur)
@@ -127,8 +130,8 @@ Point Vortxl(const Point& p, const Point& p1, const Point& p2, double gamma = 1)
     Point r1 = p - p1;
     Point r2 = p - p2;
 
-    double r1_2 = std::sqrt(r1.dot(r1));
-    double r2_2 = std::sqrt(r2.dot(r2));
+    double r1_2 = r1.longueur();
+    double r2_2 = r2.longueur();
 
     Point r1xr2 = r1.cross(r2);
     double r1xr2_2 = r1xr2.dot(r1xr2);
@@ -149,8 +152,8 @@ Point Voring(const Point& p, const Panel& panel, double gamma = 1) {
     Point u3 = Vortxl(p, panel.p3, panel.p4);
     Point u4 = Vortxl(p, panel.p4, panel.p1);
 
-    return Point{ u1.x + u2.x + u3.x + u4.x, 
-        u1.y + u2.y + u3.y + u4.y, 
+    return Point{ u1.x + u2.x + u3.x + u4.x,
+        u1.y + u2.y + u3.y + u4.y,
         u1.z + u2.z + u3.z + u4.z };
 }
 
@@ -158,7 +161,7 @@ Point Voring2(const Point& p, const Panel& panel, double gamma = 1) {
     Point u1 = Vortxl(p, panel.p1, panel.p2);
     Point u3 = Vortxl(p, panel.p3, panel.p4);
 
-    return Point{u1.x + u3.x, u1.y + u3.y, u1.z + u3.z};
+    return Point{ u1.x + u3.x, u1.y + u3.y, u1.z + u3.z };
 }
 
 // Fonction pour calculer le coefficient a
@@ -191,7 +194,7 @@ std::tuple<std::vector<Panel>, std::vector<Panel>, std::vector<Panel>> maillage(
     ny += 1;
     nx += 1;
     double x = 0, y = 0, z = 0;
-    
+
     std::vector<Point> points(nx * ny, Point());
     for (int i = 0; i < nx; ++i) {
         for (int j = 0; j < ny; ++j) {
@@ -276,19 +279,102 @@ void ecriture(const std::vector<Point>& p_colloc, const std::vector<double>& p_i
 }
 
 
+struct EulerData {
+    std::vector<double> alpha;
+    std::vector<double> CL;
+    std::vector<double> CD;
+    std::vector<double> CM;
+};
+
+// Fonction pour lire les fichiers CSV et les stocker dans un std::map
+std::map<double, EulerData> lecture_Euler(const std::string& database_path) {
+    namespace fs = std::filesystem;
+    std::map<double, EulerData> database;
+    std::regex mach_regex(R"(mach_(\d+\.\d+))");
+
+    // Parcours des fichiers dans le répertoire
+    for (const auto& entry : fs::directory_iterator(database_path)) {
+        std::string filename = entry.path().filename().string();
+        std::smatch match;
+
+        // Chercher les fichiers correspondant à "mach_X.Y"
+        if (std::regex_search(filename, match, mach_regex)) {
+            double mach_number = std::stod(match[1].str()); // Conversion du numéro de Mach
+            std::ifstream file(entry.path());
+
+            if (!file.is_open()) {
+                std::cerr << "Erreur d'ouverture du fichier : " << filename << std::endl;
+                continue;
+            }
+
+            std::string line;
+            EulerData data;
+
+            // Lire les lignes du fichier CSV
+            while (std::getline(file, line)) {
+                std::stringstream ss(line);
+                std::string value;
+                std::vector<std::string> row;
+
+                while (std::getline(ss, value, ',')) {
+                    row.push_back(value);
+                }
+
+                if (row.size() >= 4) {
+                    data.alpha.push_back(std::stod(row[0]));  // Angle d'attaque
+                    data.CL.push_back(std::stod(row[1]));     // Coefficient de portance
+                    data.CD.push_back(std::stod(row[2]));     // Coefficient de traînée
+                    data.CM.push_back(std::stod(row[3]));     // Coefficient de moment
+                }
+            }
+
+            file.close();
+            database[mach_number] = data; 
+        }
+    }
+    return database;
+}
+
+double Interpolation(const std::vector<double>& x, const std::vector<double>& y, double x_interp) {
+    if (x.size() != y.size()) {
+        std::cerr << "Les vecteurs doivent être de même dimension" << std::endl;
+        return 0.0; 
+    }
+    for (size_t i = 0; i < x.size() - 1; ++i) {
+        if (x_interp >= x[i] && x_interp <= x[i + 1]) {
+            double x0 = x[i], x1 = x[i + 1];
+            double y0 = y[i], y1 = y[i + 1];
+            double y_interp = y0 + (x_interp - x0) * (y1 - y0) / (x1 - x0);
+            return y_interp;
+        }
+    }
+    std::cerr << "La valeur à interpoler se trouve hors des bornes" << std::endl;
+    return 0.0; 
+}
 
 
-int main()
-{
-    int ny = 20;  
-    int nx = 2;  
-    double AR = 7.28;  
+
+
+
+
+
+
+
+int main() {
+    int ny = 3;
+    int nx = 2;
+    double AR = 7.28;
     double alpha_input = 5.0;
     std::vector<double> alpha(ny, alpha_input);
-
-    double Q_inf = 1.0;
-    double rho = 1.0;
     double glisse = 0.0;
+    double p_inf = 100000.0;
+    double T_inf = 300.0;
+    double Mach = 0.8;
+
+    double rho = p_inf/(T_inf*287);
+    double a = std::sqrt(1.4*287*T_inf);
+    double Q_inf = Mach*a;
+    
 
 
     std::vector<Panel> panels, panels2, panelsW;
@@ -298,21 +384,16 @@ int main()
     std::vector<Point> p_colloc(n);
     std::vector<Point> n_panel(n);
 
-    // Vitesse de l'écoulement (U_inf) et initialisation des matrices
-    //std::vector<std::vector<double>> a_ij(n, std::vector<double>(n, 0.0));
-    //std::vector<std::vector<double>> b_ij(n, std::vector<double>(n, 0.0));
-    //std::vector<double> RHS(n, 0.0);
-    //std::vector<double> gamma(n, 0.0);  // Coefficients de circulation
     MatrixXd a_ij(n, n), b_ij(n, n);
     VectorXd RHS(n), gamma(n), w_ind(n);
 
 
-    // Définir la vitesse à l'infini en fonction de alpha
-    std::vector<Point> U_inf(ny, Point(0.0, 0.0, 0.0));  
+    // Définition de la vitesse à l'infini en fonction de alpha
+    std::vector<Point> U_inf(ny, Point(0.0, 0.0, 0.0));
     for (size_t i = 0; i < ny; ++i) {
-        U_inf[i] = Point(Q_inf*std::cos(alpha[i] * M_PI / 180.0) * std::cos(glisse * M_PI / 180.0),
-                         Q_inf * std::sin(glisse * M_PI / 180.0) * std::cos(alpha[i] * M_PI / 180.0),
-                         Q_inf * std::sin(alpha[i] * M_PI / 180.0));
+        U_inf[i] = Point(Q_inf * std::cos(alpha[i] * M_PI / 180.0) * std::cos(glisse * M_PI / 180.0),
+            Q_inf * std::sin(glisse * M_PI / 180.0) * std::cos(alpha[i] * M_PI / 180.0),
+            Q_inf * std::sin(alpha[i] * M_PI / 180.0));
     }
 
     // Calcul des points de collocation et des normales
@@ -336,13 +417,15 @@ int main()
         }
     }
 
+    std::cout << "Coef a_ij" << a_ij << std::endl;
+
     // Calcul des termes RHS en fonction de la vitesse à l'infini
     for (int i = 0; i < n; ++i) {
         RHS(i) = funcRHS(U_inf[i % alpha.size()], n_panel[i]);
     }
 
     gamma = a_ij.colPivHouseholderQr().solve(RHS);
-    w_ind = b_ij*gamma;
+    w_ind = b_ij * gamma;
 
 
     std::vector<double> aire_ij(n, 0.0), dy_ij(n, 0.0), L_ij(n, 0.0), p_ij(n, 0.0), D_ij(n, 0.0);
@@ -368,21 +451,141 @@ int main()
     }
 
     // Calcul des forces totales et des coefficients de portance et de traînée
-    A = std::accumulate(aire_ij.begin(), aire_ij.end(), 0.0);  // 2 ailes, donc x2 ????????????????
+    A = std::accumulate(aire_ij.begin(), aire_ij.end(), 0.0);  
     L = std::accumulate(L_ij.begin(), L_ij.end(), 0.0);
     D = std::accumulate(D_ij.begin(), D_ij.end(), 0.0);
 
     CL = L / (0.5 * rho * Q_inf * Q_inf * A);
-    CD = D / (0.5 * rho * Q_inf * Q_inf * A);  
+    CD = D / (0.5 * rho * Q_inf * Q_inf * A);
 
     // Calcul du coefficient de portance local (Cl)
-    std::vector<double> Cl(ny, 0.0), aire_span(ny, 0.0);
+    std::vector<double> Cl(ny, 0.0), aire_span(ny, 0.0), corde_y(ny, 0.0);
     for (int i = 0; i < ny; ++i) {
         for (int j = 0; j < nx; ++j) {
             Cl[i] += L_ij[j * ny + i];
             aire_span[i] += aire_ij[j * ny + i];
         }
         Cl[i] /= (0.5 * rho * Q_inf * Q_inf * aire_span[i]);
+        corde_y[i] = aire_span[i] / dy_ij[i];
+    }
+
+
+
+
+
+
+    // Couplage Euler-VLM
+    std::vector<Point> vitesse(ny, Point(0.0, 0.0, 0.0)); 
+    std::vector<double> Cl_visc_i(ny, 0.0), Cd_visc_i(ny, 0.0), Cm_visc_i(ny, 0.0);
+    
+    // Initialisation des valeurs de l'angle d'attaque
+    std::vector<double> alpha_3D = { alpha[0] * M_PI / 180.0 }; 
+    std::vector<double> alpha_2D_i = alpha_3D;
+    std::vector<double> alpha_e(ny, 0.0);
+
+    
+    const std::string& database_path = "Euler_database/x.6";
+    std::map<double, EulerData> database = lecture_Euler(database_path);
+
+    // Interpolation en fonction du nombre de Mach
+    std::vector<double> liste_Mach;
+    for (const auto& [mach, data] : database) {
+        liste_Mach.push_back(mach);
+    }
+    if (Mach > liste_Mach.back()) {
+        std::cout << "Le nombre de Mach est trop élevé" << std::endl;
+    }
+    if (Mach < liste_Mach.front()) {
+        std::cout << "Le nombre de Mach est trop bas" << std::endl;
+    }
+    auto mach1 = database.lower_bound(Mach);  // Borne supérieure
+    if (mach1 == database.end()) --mach1;
+    auto mach0 = (mach1 == database.begin()) ? mach1 : std::prev(mach1); // Borne inférieure
+    auto& database0 = mach0->second;
+    auto& database1 = mach1->second;
+
+    // Première interpolation
+    for (int i = 0; i < ny; ++i) {
+        alpha_e[i] = Cl[i] / (2.0 * M_PI) - alpha_2D_i[i] + alpha_3D[i];
+        Cl_visc_i[i] = Interpolation({mach0->first, mach1->first}, {Interpolation(database0.alpha, database0.CL, alpha_e[i]), Interpolation(database1.alpha, database1.CL, alpha_e[i])}, Mach);
+        Cd_visc_i[i] = Interpolation({mach0->first, mach1->first}, {Interpolation(database0.alpha, database0.CD, alpha_e[i]), Interpolation(database1.alpha, database1.CD, alpha_e[i])}, Mach);
+        Cm_visc_i[i] = Interpolation({mach0->first, mach1->first}, {Interpolation(database0.alpha, database0.CM, alpha_e[i]), Interpolation(database1.alpha, database1.CM, alpha_e[i])}, Mach);
+    }
+    for (int i = 0; i < ny; ++i) {
+        alpha_2D_i[i] += 0.5 * (Cl_visc_i[i] - Cl[i]) / (2 * M_PI);
+    }
+
+
+    // Boucle de calcul itératif de correction pour Cl, Cd et Cm
+    int it = 0;
+    double erreur = 0.0;
+    for (int i = 0; i < ny; ++i) {
+        erreur += std::abs(Cl[i] - Cl_visc_i[i]);
+    }
+    while (erreur > 1E-12) {
+        std::cout << "Itération " << it << std::endl;
+        std::cout << "CL = " << CL << ", CD = " << CD << std::endl;
+        
+        // Mise à jour de la circulation en fonction de l'angle d'attaque
+        for (int i = 0; i < ny; ++i) {
+            vitesse[i] = Point(Q_inf * std::cos(alpha_2D_i[i]) * std::cos(glisse * M_PI / 180.0),
+                Q_inf * std::sin(glisse * M_PI / 180.0) * std::cos(alpha_2D_i[i]),
+                Q_inf * std::sin(alpha_2D_i[i]));
+        }
+        for (int i = 0; i < n; ++i) {
+            RHS(i) = funcRHS(vitesse[i % alpha.size()], n_panel[i]);
+        }
+        gamma = a_ij.colPivHouseholderQr().solve(RHS);
+        w_ind = b_ij * gamma;
+        
+
+        // Calcul des forces totales et des coefficients de portance et de traînée
+        for (int i = 0; i < ny; ++i) {
+            L_ij[i] = rho * gamma[i] * U_inf[i % ny].cross(dy_ij_vec[i]).longueur();
+            p_ij[i] = L_ij[i] / aire_ij[i];
+            D_ij[i] = -rho * gamma[i] * w_ind[i] * dy_ij[i];
+        }
+        for (int i = ny; i < n; ++i) {
+            L_ij[i] = rho * (gamma[i] - gamma[i - ny]) * U_inf[i % ny].cross(dy_ij_vec[i]).longueur();
+            p_ij[i] = L_ij[i] / aire_ij[i];
+            D_ij[i] = -rho / 2.0 * (gamma[i] - gamma[i - ny]) * w_ind[i] * dy_ij[i];
+        }
+        L = std::accumulate(L_ij.begin(), L_ij.end(), 0.0);
+        D = std::accumulate(D_ij.begin(), D_ij.end(), 0.0);
+        CL = L / (0.5 * rho * Q_inf * Q_inf * A);
+        CD = D / (0.5 * rho * Q_inf * Q_inf * A);
+
+        // Calcul du coefficient de portance local (Cl)
+        for (int i = 0; i < ny; ++i) {
+            Cl[i] = 0.0;
+            for (int j = 0; j < nx; ++j) {
+                Cl[i] += L_ij[j * ny + i];
+            }
+            Cl[i] /= (0.5 * rho * Q_inf * Q_inf * aire_span[i]);
+        }
+
+        // Calcul des coefficients interpolés
+        for (int i = 0; i < ny; ++i) {
+            alpha_e[i] = Cl[i] / (2.0 * M_PI) - alpha_2D_i[i] + alpha_3D[i];
+            Cl_visc_i[i] = Interpolation({mach0->first, mach1->first}, {Interpolation(database0.alpha, database0.CL, alpha_e[i]), Interpolation(database1.alpha, database1.CL, alpha_e[i])}, Mach);
+            Cd_visc_i[i] = Interpolation({mach0->first, mach1->first}, {Interpolation(database0.alpha, database0.CD, alpha_e[i]), Interpolation(database1.alpha, database1.CD, alpha_e[i])}, Mach);
+            Cm_visc_i[i] = Interpolation({mach0->first, mach1->first}, {Interpolation(database0.alpha, database0.CM, alpha_e[i]), Interpolation(database1.alpha, database1.CM, alpha_e[i])}, Mach);
+        }
+
+        // Mise à jour de l'angle d'attaque
+        for (int i = 0; i < ny; ++i) {
+            alpha_2D_i[i] += 0.5 * (Cl_visc_i[i] - Cl[i]) / (2 * M_PI);
+        }
+        
+        erreur = 0.0;
+        for (int i = 0; i < ny; ++i) {
+            erreur += std::abs(Cl[i] - Cl_visc_i[i]);
+        }
+        it++;
+        if (it > 1000) {
+            std::cout << "Nombre d'itérations dépassé" << std::endl;
+            break;
+        }
     }
 
     std::cout << "CL = " << CL << " CD = " << CD << std::endl;
