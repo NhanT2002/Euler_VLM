@@ -300,8 +300,8 @@ int main() {
             continue;
         }
 
-        // Write header
-        outFile << "Alpha (degrees),C_L,C_D,C_M\n";
+        // // Write header
+        // outFile << "Alpha (degrees),C_L,C_D,C_M\n";
 
         // Write data
         for (const auto& [alpha, C_L, C_D, C_M] : coeffs) {
