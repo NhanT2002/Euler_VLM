@@ -138,7 +138,7 @@ int main(int argc, char* argv[]) {
     if (multigrid == 1) {        
         std::vector<std::vector<double>> Residuals;
 
-        SpatialDiscretization h_state(x, y, rho, u, v, E, T, p, k2_coeff, k4_coeff, T_inf, U_ref);
+        SpatialDiscretization h_state(x, y, rho, u, v, E, T, p, k2_coeff, k4_coeff, Mach, U_ref);
         Multigrid multigrid_solver(h_state, CFL_number, residual_smoothing, k2_coeff, k4_coeff);
 
         SpatialDiscretization h2_state = multigrid_solver.mesh_restriction(h_state);
@@ -211,11 +211,11 @@ int main(int argc, char* argv[]) {
     }
 
     else {
-        TemporalDiscretization FVM(x, y, rho, u, v, E, T, p, T_inf, U_ref, CFL_number, residual_smoothing, k2_coeff, k4_coeff);
+        TemporalDiscretization FVM(x, y, rho, u, v, E, T, p, Mach, U_ref, CFL_number, residual_smoothing, k2_coeff, k4_coeff);
         std::tie(W_0, W_1, W_2, W_3, iteration_residuals, iteration_times) = FVM.RungeKutta(it_max);
         save_time_residuals(iteration_times, iteration_residuals, checkpoint_file);
 
-        // SpatialDiscretization h_state(x, y, rho, u, v, E, T, p, k2_coeff, k4_coeff, T_inf, U_ref);
+        // SpatialDiscretization h_state(x, y, rho, u, v, E, T, p, k2_coeff, k4_coeff, Mach, U_ref);
         // h_state.run_even();
         // std::cout << "fluxy_0\n" << h_state.fluxy_0 << std::endl;
         // std::cout << "fluxy_1\n" << h_state.fluxy_1 << std::endl;

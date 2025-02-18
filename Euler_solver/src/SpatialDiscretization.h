@@ -99,7 +99,7 @@ public:
 
     Eigen::ArrayXXd x, y;
     double rho, u, v, E, T, p, k2_coeff, k4_coeff;
-    double T_ref, U_ref;
+    double Mach, U_ref;
     int nvertex_y, nvertex_x, ncells_y, ncells_x, ncells_domain_y, ncells_domain_x;
     double alpha;
 
@@ -113,19 +113,19 @@ public:
                           double p,
                           double k2_coeff,
                           double k4_coeff,
-                          double T_ref,
+                          double Mach,
                           double U_ref);
     
     // Default constructor to initialize empty variables
     SpatialDiscretization()
         : rho(0), u(0), v(0), E(0), T(0), p(0), k2_coeff(0), k4_coeff(0),
-          T_ref(0), U_ref(0), alpha(0) {}
+        Mach(0), U_ref(0), alpha(0) {}
 
     // Custom copy constructor
     SpatialDiscretization(const SpatialDiscretization& other)
         : x(other.x), y(other.y), rho(other.rho), u(other.u), v(other.v),
           E(other.E), T(other.T), p(other.p), k2_coeff(other.k2_coeff),
-          k4_coeff(other.k4_coeff), T_ref(other.T_ref), U_ref(other.U_ref), alpha(other.alpha) {}
+          k4_coeff(other.k4_coeff), Mach(other.Mach), U_ref(other.U_ref), alpha(other.alpha) {}
 
     // Custom assignment operator
     SpatialDiscretization& operator=(const SpatialDiscretization& other) {
@@ -140,7 +140,7 @@ public:
             p = other.p;
             k2_coeff = other.k2_coeff;
             k4_coeff = other.k4_coeff;
-            T_ref = other.T_ref;
+            Mach = other.Mach;
             U_ref = other.U_ref;
             alpha = other.alpha;
         }
@@ -178,6 +178,8 @@ public:
     void run_odd();
 
     void run_even();
+
+    std::tuple<double, double, double> compute_coeff();
 };
 
 

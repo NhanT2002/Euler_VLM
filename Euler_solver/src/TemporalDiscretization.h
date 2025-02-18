@@ -16,7 +16,7 @@ public:
     Eigen::ArrayXXd& x;
     Eigen::ArrayXXd& y;
     double rho, u, v, E, T, p;
-    double T_ref, U_ref;
+    double Mach, U_ref;
 
     SpatialDiscretization current_state;
     double sigma, k2_coeff, k4_coeff;
@@ -30,7 +30,7 @@ public:
                             double E,
                             double T,
                             double p,
-                            double T_ref,
+                            double Mach,
                             double U_ref,
                             double sigma = 0.5,
                             int res_smoothing = 1,

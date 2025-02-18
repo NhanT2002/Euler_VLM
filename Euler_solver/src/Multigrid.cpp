@@ -78,7 +78,7 @@ SpatialDiscretization Multigrid::mesh_restriction(SpatialDiscretization& h_state
     // write_PLOT3D_mesh(x_2h, y_2h, "mesh_2h.xy");
     // write_PLOT3D_mesh(h_state.x, h_state.y, "mesh_h.xy");
 
-    SpatialDiscretization h2_state(x_2h, y_2h, h_state.rho, h_state.u, h_state.v, h_state.E, h_state.T, h_state.p, h_state.k2_coeff, h_state.k4_coeff, h_state.T_ref, h_state.U_ref);
+    SpatialDiscretization h2_state(x_2h, y_2h, h_state.rho, h_state.u, h_state.v, h_state.E, h_state.T, h_state.p, h_state.k2_coeff, h_state.k4_coeff, h_state.Mach, h_state.U_ref);
         
     h2_state.run_even();
     h2_state.update_Rd0();

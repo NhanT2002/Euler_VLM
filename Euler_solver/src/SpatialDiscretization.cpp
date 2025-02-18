@@ -7,6 +7,7 @@
 #include <tuple>
 #include <omp.h>
 #include <Eigen/Dense>
+#include "Multigrid.h"
 
 void halo(Eigen::ArrayXXd& array) {
     int im1 = array.cols() - 3;
@@ -30,9 +31,9 @@ SpatialDiscretization::SpatialDiscretization(const Eigen::ArrayXXd& x,
                                              double p,
                                              double k2_coeff,
                                              double k4_coeff,
-                                             double T_ref,
+                                             double Mach,
                                              double U_ref)
-    : x(x), y(y), rho(rho), u(u), v(v), E(E), T(T), p(p), k2_coeff(k2_coeff), k4_coeff(k4_coeff), T_ref(T_ref), U_ref(U_ref) {
+    : x(x), y(y), rho(rho), u(u), v(v), E(E), T(T), p(p), k2_coeff(k2_coeff), k4_coeff(k4_coeff), Mach(Mach), U_ref(U_ref) {
     nvertex_y = x.rows();
     nvertex_x = x.cols();
     ncells_y = nvertex_y + 3; // nvertex_y - 1 + 4 for dummy cells
@@ -352,6 +353,30 @@ void SpatialDiscretization::update_halo() {
 
 }
 
+std::tuple<double, double, double> SpatialDiscretization::compute_coeff() {
+    double x_ref = 0.25;
+    double y_ref = 0.0;
+    double c = 1.0;
+
+    auto seqx = Eigen::seq(2, this->ncells_x-3);    
+    Eigen::ArrayXXd p_wall = 0.5*(3*this->p_cells(2, seqx) - this->p_cells(3, seqx));
+    double Fx = (p_wall*this->nx_x(2, seqx)*this->Ds_x(2, seqx)).sum();
+    double Fy = (p_wall*this->nx_y(2, seqx)*this->Ds_x(2, seqx)).sum();
+
+    Eigen::ArrayXXd x_mid = 0.5*(this->x(0, Eigen::seq(0, x.cols()-2)) + this->x(0, Eigen::seq(1, x.cols()-1)));
+    Eigen::ArrayXXd y_mid = 0.5*(this->y(0, Eigen::seq(0, x.cols()-2)) + this->y(0, Eigen::seq(1, x.cols()-1)));
+    double M = (this->p_cells(2, seqx)*(-(x_mid-x_ref)*this->nx_y(2, seqx) + (y_mid-y_ref)*this->nx_x(2, seqx))*this->Ds_x(2, seqx)).sum();
+
+    double L = Fy*std::cos(this->alpha) - Fx*std::sin(this->alpha);
+    double D = Fy*std::sin(this->alpha) + Fx*std::cos(this->alpha);
+
+    double C_l = L/(0.5*rho*(u*u+v*v)*c);
+    double C_d = D/(0.5*rho*(u*u+v*v)*c);
+    double C_m = M/(0.5*rho*(u*u+v*v)*c*c);
+
+    return {C_l, C_d, C_m};
+}
+
 void SpatialDiscretization::compute_dummy_cells() {
     // Solid wall
     // Eigen::Array<double, 1, Eigen::Dynamic> V = nx_x(2, Eigen::all)*u_cells(2, Eigen::all) + nx_y(2, Eigen::all)*v_cells(2, Eigen::all);
@@ -421,7 +446,22 @@ void SpatialDiscretization::compute_dummy_cells() {
                 p_cells(jj, i) = p_cells(j_last_cells, i);
             } 
             else { // subsonic
-                double p_b = this->p;
+                // Vortex correction
+                int j_mesh = j_last_cells - 2;
+                int i_mesh = i - 2;
+                double x_cell = 0.5*(this->x(j_mesh, i_mesh) + this->x(j_mesh+1, i_mesh+1));
+                double y_cell = 0.5*(this->y(j_mesh, i_mesh) + this->y(j_mesh+1, i_mesh+1));
+                double d = std::sqrt((x_cell - 0.25)*(x_cell - 0.25) + y_cell*y_cell);
+                double theta = std::atan2(y_cell, (x_cell - 0.25));
+                // std::cout << "d: " << d << " theta: " << theta << std::endl;
+                auto [C_l, C_d, C_m] = compute_coeff();
+                double gamma = 0.5*std::sqrt(this->u*this->u + this->v*this->v)*C_l;
+                double u_inf = this->u + (gamma*std::sqrt(1-this->Mach*this->Mach)/(2*M_PI*d))*std::sin(theta)/(1-this->Mach*this->Mach*std::sin(theta-this->alpha)*std::sin(theta-this->alpha));
+                double v_inf = this->v - (gamma*std::sqrt(1-this->Mach*this->Mach)/(2*M_PI*d))*std::cos(theta)/(1-this->Mach*this->Mach*std::sin(theta-this->alpha)*std::sin(theta-this->alpha));
+                double p_inf = std::pow(std::pow(this->p, (1.4-1)/1.4) + (1.4-1)/1.4*(this->p*((this->u*this->u + this->v*this->v)-(u_inf*u_inf+v_inf*v_inf))/(2*std::pow(this->p, 1/1.4))), 1.4/(1.4-1));
+                // double rho_inf = this->rho*std::pow(p_inf/this->p, 1/1.4);
+
+                double p_b = p_inf;
                 double rho_b = rho_d + (p_b - p_d)/(c*c);
                 double u_b = u_d + nx*(p_d - p_b)/(rho_d*c);
                 double v_b = v_d + ny*(p_d - p_b)/(rho_d*c);
@@ -468,10 +508,25 @@ void SpatialDiscretization::compute_dummy_cells() {
                 p_cells(jj, i) = p_cells(j, i);
             }
             else { // subsonic
-                double p_b = 0.5*(this->p + p_d - rho_d*c*(nx*(this->u - u_d) + ny*(this->v - v_d)));
-                double rho_b = this->rho + (p_b - this->p)/(c*c);
-                double u_b = this->u - nx*(this->p - p_b)/(rho_d*c);
-                double v_b = this->v - ny*(this->p - p_b)/(rho_d*c);
+                // Vortex correction
+                int j_mesh = j_last_cells - 2;
+                int i_mesh = i - 2;
+                double x_cell = 0.5*(this->x(j_mesh, i_mesh) + this->x(j_mesh+1, i_mesh+1));
+                double y_cell = 0.5*(this->y(j_mesh, i_mesh) + this->y(j_mesh+1, i_mesh+1));
+                double d = std::sqrt((x_cell - 0.25)*(x_cell - 0.25) + y_cell*y_cell);
+                double theta = std::atan2(y_cell, (x_cell - 0.25));
+                // std::cout << "d: " << d << " theta: " << theta << std::endl;
+                auto [C_l, C_d, C_m] = compute_coeff();
+                double gamma = 0.5*std::sqrt(this->u*this->u + this->v*this->v)*C_l;
+                double u_inf = this->u + (gamma*std::sqrt(1-this->Mach*this->Mach)/(2*M_PI*d))*std::sin(theta)/(1-this->Mach*this->Mach*std::sin(theta-this->alpha)*std::sin(theta-this->alpha));
+                double v_inf = this->v - (gamma*std::sqrt(1-this->Mach*this->Mach)/(2*M_PI*d))*std::cos(theta)/(1-this->Mach*this->Mach*std::sin(theta-this->alpha)*std::sin(theta-this->alpha));
+                double p_inf = std::pow(std::pow(this->p, (1.4-1)/1.4) + (1.4-1)/1.4*(this->p*((this->u*this->u + this->v*this->v)-(u_inf*u_inf+v_inf*v_inf))/(2*std::pow(this->p, 1/1.4))), 1.4/(1.4-1));
+                double rho_inf = this->rho*std::pow(p_inf/this->p, 1/1.4);
+
+                double p_b = 0.5*(p_inf + p_d - rho_d*c*(nx*(u_inf - u_d) + ny*(v_inf - v_d)));
+                double rho_b = rho_inf + (p_b - p_inf)/(c*c);
+                double u_b = u_inf - nx*(p_inf - p_b)/(rho_d*c);
+                double v_b = v_inf - ny*(p_inf - p_b)/(rho_d*c);
                 double E_b = p_b/(rho_b*(1.4-1)) + 0.5*(u_b*u_b + v_b*v_b);
 
                 // rho_cells(j, i) = 2*rho_b - rho_d;
